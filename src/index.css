@@ -57,22 +57,58 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-blue-500 to-primary-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent;
   }
   
-  .bg-gradient-blue {
-    @apply bg-gradient-to-r from-blue-400 to-blue-600;
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text text-transparent;
   }
   
   .bg-gradient-primary {
-    @apply bg-gradient-to-r from-primary-500 to-primary-700;
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500;
   }
   
-  .shadow-blue {
-    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.3);
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary-400 to-primary-600;
+  }
+  
+  .bg-gradient-gold {
+    @apply bg-gradient-to-r from-gold-400 to-gold-600;
+  }
+  
+  .bg-gradient-accent {
+    @apply bg-gradient-to-br from-accent-300 to-accent-500;
   }
   
   .shadow-primary {
-    box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.3);
+    box-shadow: 0 10px 25px -3px rgba(54, 116, 181, 0.3), 0 4px 6px -2px rgba(54, 116, 181, 0.05);
+  }
+  
+  .shadow-secondary {
+    box-shadow: 0 10px 25px -3px rgba(87, 143, 202, 0.3), 0 4px 6px -2px rgba(87, 143, 202, 0.05);
+  }
+  
+  .shadow-gold {
+    box-shadow: 0 10px 25px -3px rgba(250, 218, 122, 0.4), 0 4px 6px -2px rgba(250, 218, 122, 0.1);
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+  
+  .dropdown-enter {
+    @apply opacity-0 scale-95 transform;
+  }
+  
+  .dropdown-enter-active {
+    @apply opacity-100 scale-100 transition-all duration-200 ease-out;
+  }
+  
+  .dropdown-exit {
+    @apply opacity-100 scale-100;
+  }
+  
+  .dropdown-exit-active {
+    @apply opacity-0 scale-95 transition-all duration-150 ease-in;
   }
 }

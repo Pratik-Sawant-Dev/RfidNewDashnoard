@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import { ThemeProvider } from './contexts/ThemeContext';
+import store from './store';
 
 // Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import PurchaseEntryPage from './pages/PurchaseEntryPage';
 import AddStockPage from './pages/AddStockPage';
@@ -19,6 +22,7 @@ import PurchaseReportsPage from './pages/reports/PurchaseReportsPage';
 // Layout Components
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import ApiSettingsComponent from './components/ApiSettingsComponent';
 
 // Main Layout Component
 const MainLayout = ({ children }) => {
@@ -32,7 +36,7 @@ const MainLayout = ({ children }) => {
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <Header onMenuToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900">
           <div className="min-h-full">
             {children}
@@ -45,14 +49,16 @@ const MainLayout = ({ children }) => {
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <div className="App">
+    <Provider store={store}>
+      <ThemeProvider>
+        <Router>
+          <div className="App">
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             
             {/* Protected Routes with Layout */}
             <Route path="/dashboard" element={
@@ -174,14 +180,13 @@ function App() {
             {/* Settings */}
             <Route path="/settings" element={
               <MainLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Settings
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Application settings coming soon...
-                  </p>
-                </div>
+                <ApiSettingsComponent />
+              </MainLayout>
+            } />
+            
+            <Route path="/settings/api" element={
+              <MainLayout>
+                <ApiSettingsComponent />
               </MainLayout>
             } />
             
@@ -208,6 +213,7 @@ function App() {
         </div>
       </Router>
     </ThemeProvider>
+    </Provider>
   );
 }
 

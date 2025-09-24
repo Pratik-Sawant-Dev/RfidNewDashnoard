@@ -14,9 +14,10 @@ const Button = ({
   const baseClasses = 'font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200',
-    accent: 'bg-accent-500 hover:bg-accent-600 text-white focus:ring-accent-500',
+    primary: 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500 shadow-primary hover:shadow-secondary',
+    secondary: 'bg-secondary-500 hover:bg-secondary-600 text-white focus:ring-secondary-500 shadow-secondary',
+    accent: 'bg-accent-400 hover:bg-accent-500 text-gray-800 focus:ring-accent-500 shadow-gold',
+    gold: 'bg-gold-500 hover:bg-gold-600 text-white focus:ring-gold-500 shadow-gold',
     outline: 'border border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500 dark:border-primary-400 dark:text-primary-400 dark:hover:bg-primary-900',
     ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-400 dark:hover:bg-gray-800',
   };
@@ -35,6 +36,7 @@ const Button = ({
         baseClasses,
         variants[variant],
         sizes[size],
+        'flex items-center justify-center', // Ensure horizontal layout
         className
       )}
       disabled={disabled}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -92,9 +92,28 @@ const Sidebar = ({ isOpen, onClose }) => {
     return location.pathname === path;
   };
 
+  const handleLinkClick = () => {
+    // Close sidebar on mobile when a link is clicked
+    if (window.innerWidth < 1024) {
+      onClose();
+    }
+  };
+
   const isSubmenuActive = (submenu) => {
     return submenu.some(item => location.pathname === item.path);
   };
+
+  // Close sidebar on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   return (
     <>
@@ -151,6 +170,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                           <li key={subItem.name}>
                             <Link
                               to={subItem.path}
+                              onClick={handleLinkClick}
                               className={clsx(
                                 'sidebar-item',
                                 isActive(subItem.path) ? 'sidebar-item-active' : 'sidebar-item-inactive'
@@ -166,6 +186,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 ) : (
                   <Link
                     to={item.path}
+                    onClick={handleLinkClick}
                     className={clsx(
                       'sidebar-item',
                       isActive(item.path) ? 'sidebar-item-active' : 'sidebar-item-inactive'
