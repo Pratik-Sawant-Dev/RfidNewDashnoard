@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Gem, ArrowLeft } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
+import { useDispatch } from "react-redux";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Card from "../components/ui/Card";
@@ -9,11 +10,14 @@ import ThemeToggle from "../components/ui/ThemeToggle";
 import { ToastContainer } from "../components/ui/Toast";
 import useToast from "../hooks/useToast";
 import { loginUser } from "../utils/api";
+import { loginStart, loginSuccess, loginFailure } from "../store/slices/authSlice";
+import useAuth from "../hooks/useAuth";
 
 const LoginPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { toasts, error, success, removeToast } = useToast();
+  const { isLoading } = useAuth();
   
   const {
     register,
@@ -36,7 +40,9 @@ const LoginPage = () => {
 
   const onSubmit = async (data) => {
     console.log("Form submitted with data:", data);
-    setIsLoading(true);
+    
+    // Dispatch login start action
+    dispatch(loginStart());
 
     try {
       // Simple API call using utility function
@@ -48,20 +54,32 @@ const LoginPage = () => {
 
       // Check if login was successful (has token) or failed (has message)
       if (result.token) {
-        // Success - store token and navigate
+        // Success - dispatch login success action with all data
+        dispatch(loginSuccess({
+          token: result.token,
+          user: result.user,
+          expiresAt: result.expiresAt
+        }));
+        
+        // Store data in localStorage for persistence
         localStorage.setItem("authToken", result.token);
+        localStorage.setItem("userData", JSON.stringify(result.user));
+        localStorage.setItem("tokenExpiry", result.expiresAt);
+        
         success("Login successful");
         setTimeout(() => {
-          // navigate("/dashboard");
+           navigate("/dashboard");
         }, 1000);
-        setIsLoading(false);
-      } 
+      } else {
+        // Handle login failure
+        dispatch(loginFailure(result.message || "Login failed"));
+        error(result.message || "Login failed");
+      }
     } catch (err) {
       console.log(err.message);
-      setIsLoading(false);
+      dispatch(loginFailure(err.message));
       error(err.message); 
       // Handle different types of errors
-    
     } 
   };
 

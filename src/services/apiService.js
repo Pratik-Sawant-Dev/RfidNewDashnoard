@@ -1,6 +1,7 @@
 import axios from 'axios';
 import store from '../store';
 import { selectBaseUrl, selectApiConfig } from '../store/slices/apiSlice';
+import { selectToken } from '../store/slices/authSlice';
 
 // Create axios instance
 const createAxiosInstance = () => {
@@ -18,7 +19,12 @@ const createAxiosInstance = () => {
   // Request interceptor to add auth token
   instance.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem('authToken');
+      // Try to get token from Redux store first, then localStorage as fallback
+      const state = store.getState();
+      const reduxToken = selectToken(state);
+      const localToken = localStorage.getItem('authToken');
+      const token = reduxToken || localToken;
+      
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -178,6 +184,44 @@ class ApiService {
 
   async assignRfidTag(tagData) {
     return this.post('/api/Rfid/assign', tagData);
+  }
+
+  // User Management specific methods
+  async registerSubUser(userData) {
+    return this.post('/api/Admin/register-sub-user', userData);
+  }
+
+  async getUsersUnderAdmin() {
+    return this.get('/api/Admin/users-under-admin');
+  }
+
+  async updateUser(subUserId, userData) {
+    return this.put(`/api/Admin/users/${subUserId}`, userData);
+  }
+
+  async deleteUser(subUserId) {
+    return this.delete(`/api/Admin/users/${subUserId}`);
+  }
+
+  // Master Data - Category specific methods
+  async getCategories() {
+    return this.get('/api/MasterData/categories');
+  }
+
+  async getCategoryById(categoryId) {
+    return this.get(`/api/MasterData/categories/${categoryId}`);
+  }
+
+  async addCategory(categoryData) {
+    return this.post('/api/MasterData/categories', categoryData);
+  }
+
+  async updateCategory(categoryData) {
+    return this.put('/api/MasterData/categories', categoryData);
+  }
+
+  async deleteCategory(categoryId) {
+    return this.delete(`/api/MasterData/categories/${categoryId}`);
   }
 }
 

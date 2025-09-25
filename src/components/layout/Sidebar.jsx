@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   ShoppingCart, 
@@ -14,15 +14,32 @@ import {
   CreditCard,
   TrendingUp,
   Package2,
-  Receipt
+  Receipt,
+  UserCheck,
+  Shield,
+  UserCog,
+  LogOut,
+  Database,
+  Tag,
+  Palette,
+  Award,
+  Building,
+  Calculator,
+  Box
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import useAuth from '../../hooks/useAuth';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAdmin, user, logout } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({
     reports: false,
     inventory: false,
+    sales: false,
+    member: false,
+    master: false,
   });
 
   const menuItems = [
@@ -30,6 +47,19 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: 'Dashboard',
       path: '/dashboard',
       icon: Home,
+    },
+    {
+      name: 'Master',
+      icon: Database,
+      submenu: [
+        { name: 'Category', path: '/master/category', icon: Tag },
+        { name: 'Product', path: '/master/product', icon: Package },
+        { name: 'Design', path: '/master/design', icon: Palette },
+        { name: 'Purity', path: '/master/purity', icon: Award },
+        { name: 'Branch', path: '/master/branch', icon: Building },
+        { name: 'Counter', path: '/master/counter', icon: Calculator },
+        { name: 'Box', path: '/master/box', icon: Box },
+      ],
     },
     {
       name: 'Purchase Entry',
@@ -99,9 +129,34 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    onClose();
+  };
+
   const isSubmenuActive = (submenu) => {
     return submenu.some(item => location.pathname === item.path);
   };
+
+  // Filter menu items based on user permissions
+  const getFilteredMenuItems = () => {
+    return menuItems.map(item => {
+      if (item.submenu) {
+        const filteredSubmenu = item.submenu.filter(subItem => {
+          // If item requires admin access, check if user is admin
+          if (subItem.requiresAdmin !== undefined) {
+            return subItem.requiresAdmin ? isAdmin : true;
+          }
+          return true;
+        });
+        return { ...item, submenu: filteredSubmenu };
+      }
+      return item;
+    });
+  };
+
+  const filteredMenuItems = getFilteredMenuItems();
 
   // Close sidebar on Escape key press
   useEffect(() => {
@@ -127,7 +182,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       
       {/* Sidebar */}
       <div className={clsx(
-        'fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out',
+        'fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out flex flex-col',
         isOpen ? 'translate-x-0' : '-translate-x-full',
         'lg:translate-x-0 lg:relative lg:z-auto lg:block'
       )}>
@@ -142,57 +197,72 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-3">
+        <nav className="mt-6 px-3 flex-1">
           <ul className="space-y-1">
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <li key={item.name}>
-                {item.submenu ? (
+                {item.submenu && item.submenu.length > 0 ? (
                   <div>
                     <button
                       onClick={() => toggleSubmenu(item.name.toLowerCase().replace(' ', ''))}
                       className={clsx(
-                        'sidebar-item w-full text-left',
+                        'sidebar-item w-full text-left group',
                         isSubmenuActive(item.submenu) ? 'sidebar-item-active' : 'sidebar-item-inactive'
                       )}
                     >
-                      <item.icon className="w-5 h-5 mr-3" />
+                      <item.icon className="w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110" />
                       <span className="flex-1">{item.name}</span>
-                      {expandedMenus[item.name.toLowerCase().replace(' ', '')] ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
+                      <div className="transition-transform duration-200 ease-in-out">
+                        {expandedMenus[item.name.toLowerCase().replace(' ', '')] ? (
+                          <ChevronDown className="w-4 h-4 rotate-180" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </div>
                     </button>
                     
-                    {expandedMenus[item.name.toLowerCase().replace(' ', '')] && (
-                      <ul className="mt-1 ml-8 space-y-1">
+                    <div className={clsx(
+                      'overflow-hidden transition-all duration-300 ease-in-out',
+                      expandedMenus[item.name.toLowerCase().replace(' ', '')] 
+                        ? 'max-h-96 opacity-100' 
+                        : 'max-h-0 opacity-0'
+                    )}>
+                      <ul className="mt-1 ml-8 space-y-1 pb-2">
                         {item.submenu.map((subItem) => (
                           <li key={subItem.name}>
                             <Link
                               to={subItem.path}
                               onClick={handleLinkClick}
                               className={clsx(
-                                'sidebar-item',
+                                'sidebar-item group transition-all duration-200 hover:translate-x-1',
                                 isActive(subItem.path) ? 'sidebar-item-active' : 'sidebar-item-inactive'
                               )}
                             >
-                              <span className="ml-6">{subItem.name}</span>
+                              {subItem.icon && (
+                                <subItem.icon className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                              )}
+                              <span className="flex-1">{subItem.name}</span>
+                              {subItem.description && (
+                                <span className="text-xs text-gray-400 dark:text-gray-500 hidden group-hover:block transition-opacity duration-200">
+                                  {subItem.description}
+                                </span>
+                              )}
                             </Link>
                           </li>
                         ))}
                       </ul>
-                    )}
+                    </div>
                   </div>
                 ) : (
                   <Link
                     to={item.path}
                     onClick={handleLinkClick}
                     className={clsx(
-                      'sidebar-item',
+                      'sidebar-item group transition-all duration-200 hover:translate-x-1',
                       isActive(item.path) ? 'sidebar-item-active' : 'sidebar-item-inactive'
                     )}
                   >
-                    <item.icon className="w-5 h-5 mr-3" />
+                    <item.icon className="w-5 h-5 mr-3 transition-transform duration-200 group-hover:scale-110" />
                     <span>{item.name}</span>
                   </Link>
                 )}
@@ -200,6 +270,17 @@ const Sidebar = ({ isOpen, onClose }) => {
             ))}
           </ul>
         </nav>
+
+        {/* Logout Section */}
+        <div className="mt-auto p-3 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 group"
+          >
+            <LogOut className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
+            <span className="text-sm font-medium">Sign Out</span>
+          </button>
+        </div>
       </div>
     </>
   );

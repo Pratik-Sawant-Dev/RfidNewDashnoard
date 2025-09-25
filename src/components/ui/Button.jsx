@@ -18,6 +18,7 @@ const Button = ({
     secondary: 'bg-secondary-500 hover:bg-secondary-600 text-white focus:ring-secondary-500 shadow-secondary',
     accent: 'bg-accent-400 hover:bg-accent-500 text-gray-800 focus:ring-accent-500 shadow-gold',
     gold: 'bg-gold-500 hover:bg-gold-600 text-white focus:ring-gold-500 shadow-gold',
+    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
     outline: 'border border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500 dark:border-primary-400 dark:text-primary-400 dark:hover:bg-primary-900',
     ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-400 dark:hover:bg-gray-800',
   };

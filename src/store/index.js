@@ -1,12 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import apiReducer from './slices/apiSlice';
+import authReducer from './slices/authSlice';
 
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
     api: apiReducer,
+    auth: authReducer,
     // Add other slices here as needed
-    // user: userReducer,
     // inventory: inventoryReducer,
     // etc.
   },

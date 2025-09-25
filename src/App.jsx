@@ -19,30 +19,61 @@ import StockReportsPage from './pages/reports/StockReportsPage';
 import SalesReportsPage from './pages/reports/SalesReportsPage';
 import PurchaseReportsPage from './pages/reports/PurchaseReportsPage';
 
+// Member Pages
+import AdminPage from './pages/member/AdminPage';
+import UserPage from './pages/member/UserPage';
+
+// Management Pages
+import UserManagementPage from './pages/management/UserManagementPage';
+import SystemMonitoringPage from './pages/management/SystemMonitoringPage';
+
+// Master Pages
+import CategoryPage from './pages/master/CategoryPage';
+import ProductPage from './pages/master/ProductPage';
+import DesignPage from './pages/master/DesignPage';
+import PurityPage from './pages/master/PurityPage';
+import BranchPage from './pages/master/BranchPage';
+import CounterPage from './pages/master/CounterPage';
+import BoxPage from './pages/master/BoxPage';
+
 // Layout Components
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import RightSidebar from './components/layout/RightSidebar';
 import ApiSettingsComponent from './components/ApiSettingsComponent';
+import AuthInitializer from './components/AuthInitializer';
 
 // Main Layout Component
 const MainLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const toggleRightSidebar = () => {
+    setIsRightSidebarOpen(!isRightSidebarOpen);
   };
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onMenuToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <Header 
+          onMenuToggle={toggleSidebar} 
+          isSidebarOpen={isSidebarOpen}
+          onRightSidebarToggle={toggleRightSidebar}
+          isRightSidebarOpen={isRightSidebarOpen}
+        />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900">
           <div className="min-h-full">
             {children}
           </div>
         </main>
       </div>
+      {/* Right Sidebar - Always render for animations */}
+      <RightSidebar isOpen={isRightSidebarOpen} onClose={() => setIsRightSidebarOpen(false)} />
     </div>
   );
 };
@@ -51,6 +82,7 @@ function App() {
   return (
     <Provider store={store}>
       <ThemeProvider>
+        <AuthInitializer />
         <Router>
           <div className="App">
           <Routes>
@@ -82,6 +114,75 @@ function App() {
             <Route path="/invoices" element={
               <MainLayout>
                 <InvoicePage />
+              </MainLayout>
+            } />
+            
+            {/* Member Routes */}
+            <Route path="/member/admin" element={
+              <MainLayout>
+                <AdminPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/member/user" element={
+              <MainLayout>
+                <UserPage />
+              </MainLayout>
+            } />
+
+            {/* Management Routes */}
+            <Route path="/management/users" element={
+              <MainLayout>
+                <UserManagementPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/management/monitoring" element={
+              <MainLayout>
+                <SystemMonitoringPage />
+              </MainLayout>
+            } />
+            
+            {/* Master Routes */}
+            <Route path="/master/category" element={
+              <MainLayout>
+                <CategoryPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/master/product" element={
+              <MainLayout>
+                <ProductPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/master/design" element={
+              <MainLayout>
+                <DesignPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/master/purity" element={
+              <MainLayout>
+                <PurityPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/master/branch" element={
+              <MainLayout>
+                <BranchPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/master/counter" element={
+              <MainLayout>
+                <CounterPage />
+              </MainLayout>
+            } />
+            
+            <Route path="/master/box" element={
+              <MainLayout>
+                <BoxPage />
               </MainLayout>
             } />
             
