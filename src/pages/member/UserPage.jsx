@@ -5,6 +5,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import DataTable from '../../components/crud/DataTable';
 import UserForm from '../../components/crud/UserForm';
+import PermissionsModal from '../../components/ui/PermissionsModal';
 import useToast from '../../hooks/useToast';
 import { registerSubUser, getUsersUnderAdmin, updateUser, deleteUser } from '../../services/userApi';
 import { ToastContainer } from '../../components/ui/Toast';
@@ -21,6 +22,7 @@ const UserPage = () => {
   const [viewingUser, setViewingUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, users: [] });
+  const [permissionsModal, setPermissionsModal] = useState({ isOpen: false, user: null });
 
   // Fetch users on component mount
   useEffect(() => {
@@ -78,10 +80,38 @@ const UserPage = () => {
       ),
     },
     {
-      key: 'organisationName',
-      header: 'Organization',
-      accessor: 'organisationName',
+      key: 'branchId',
+      header: 'Branch',
+      accessor: 'branchId',
       sortable: true,
+      render: (value) => `Branch ${value}`,
+    },
+    {
+      key: 'counterId',
+      header: 'Counter',
+      accessor: 'counterId',
+      sortable: true,
+      render: (value) => `Counter ${value}`,
+    },
+    {
+      key: 'permissions',
+      header: 'Permissions',
+      accessor: 'permissions',
+      sortable: false,
+      render: (permissions, row) => {
+        return (
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => setPermissionsModal({ isOpen: true, user: row })}
+              className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors duration-200 flex items-center gap-2"
+              title="View detailed permissions"
+            >
+              <Eye className="w-4 h-4" />
+              <span className="text-sm font-medium">View</span>
+            </button>
+          </div>
+        );
+      },
     },
     {
       key: 'isActive',
@@ -171,6 +201,9 @@ const UserPage = () => {
           address: formData.address,
           organisationName: formData.organisationName,
           showroomType: formData.showroomType,
+          branchId: parseInt(formData.branchId),
+          counterId: parseInt(formData.counterId),
+          permissions: formData.permissions || [],
           isAdmin: false,
           userType: 'User',
           isActive: true
@@ -195,6 +228,9 @@ const UserPage = () => {
           address: formData.address,
           organisationName: formData.organisationName,
           showroomType: formData.showroomType,
+          branchId: parseInt(formData.branchId),
+          counterId: parseInt(formData.counterId),
+          permissions: formData.permissions || [],
           isAdmin: false,
           userType: 'User',
           adminUserId: user?.userId || user?.id // Use current user's ID as admin
@@ -221,14 +257,46 @@ const UserPage = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        {/* Mobile Layout */}
+        <div className="block sm:hidden space-y-4">
+          {/* Title Section */}
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+              <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white truncate">
+                User Management
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 truncate">
+                Create, read, update, and delete user accounts
+              </p>
+            </div>
+          </div>
+          
+          {/* Refresh Button - Mobile */}
+          <div className="flex justify-end">
+            <Button
+              variant="secondary"
+              onClick={fetchUsers}
+              disabled={isLoading}
+              className="flex items-center space-x-2 text-sm px-3 py-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
               <User className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
                 User Management
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
@@ -288,6 +356,14 @@ const UserPage = () => {
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+      />
+
+      {/* Permissions Modal */}
+      <PermissionsModal
+        isOpen={permissionsModal.isOpen}
+        onClose={() => setPermissionsModal({ isOpen: false, user: null })}
+        user={permissionsModal.user}
+        title="User Permissions Details"
       />
     </div>
   );

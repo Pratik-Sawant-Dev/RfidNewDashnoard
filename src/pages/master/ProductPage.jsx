@@ -1,74 +1,70 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Search, Package } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Search, Package, Loader2 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import ConfirmAlert from '../../components/ui/ConfirmAlert';
+import Toast from '../../components/ui/Toast';
+import useToast from '../../hooks/useToast';
+import apiService from '../../services/apiService';
 
 const ProductPage = () => {
-  const [products, setProducts] = useState([
-    { 
-      id: 1, 
-      name: 'Gold Ring 18K', 
-      sku: 'GR-18K-001', 
-      category: 'Rings', 
-      weight: '5.2g', 
-      price: 25000, 
-      status: 'Active', 
-      createdAt: '2024-01-15' 
-    },
-    { 
-      id: 2, 
-      name: 'Silver Necklace', 
-      sku: 'SN-925-002', 
-      category: 'Necklaces', 
-      weight: '12.5g', 
-      price: 8500, 
-      status: 'Active', 
-      createdAt: '2024-01-10' 
-    },
-    { 
-      id: 3, 
-      name: 'Diamond Earrings', 
-      sku: 'DE-1CT-003', 
-      category: 'Earrings', 
-      weight: '3.8g', 
-      price: 45000, 
-      status: 'Active', 
-      createdAt: '2024-01-08' 
-    },
-  ]);
-
+  const [products, setProducts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    category: '',
-    weight: '',
-    price: '',
-    status: 'Active'
+    productName: ''
   });
+  const { toasts, success, error, removeToast } = useToast();
 
-  const categories = ['Rings', 'Necklaces', 'Earrings', 'Bracelets'];
+  // Load products on component mount
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getProducts();
+      console.log('API Response:', response); // Debug log
+      
+      // Ensure response is an array
+      if (Array.isArray(response)) {
+        setProducts(response);
+      } else if (response && Array.isArray(response.data)) {
+        setProducts(response.data);
+      } else if (response && response.products && Array.isArray(response.products)) {
+        setProducts(response.products);
+      } else {
+        setProducts([]);
+        console.warn('Unexpected API response format:', response);
+      }
+    } catch (err) {
+      console.error('Error loading products:', err);
+      error('Failed to load products. Please try again.');
+      // Fallback to empty array - you can add mock data here for testing
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAdd = () => {
     setSelectedProduct(null);
-    setFormData({ name: '', sku: '', category: '', weight: '', price: '', status: 'Active' });
+    setFormData({ productName: '' });
     setIsModalOpen(true);
   };
 
   const handleEdit = (product) => {
+    console.log('Selected product for edit:', product); // Debug log
     setSelectedProduct(product);
     setFormData({
-      name: product.name,
-      sku: product.sku,
-      category: product.category,
-      weight: product.weight,
-      price: product.price.toString(),
-      status: product.status
+      productName: product.productName || product.name || '',
+      productId: product.productId || product.id || ''
     });
     setIsModalOpen(true);
   };
@@ -78,38 +74,63 @@ const ProductPage = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (selectedProduct) {
-      // Update existing product
-      setProducts(products.map(prod => 
-        prod.id === selectedProduct.id 
-          ? { ...prod, ...formData, price: parseFloat(formData.price) }
-          : prod
-      ));
-    } else {
-      // Add new product
-      const newProduct = {
-        id: Date.now(),
-        ...formData,
-        price: parseFloat(formData.price),
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setProducts([...products, newProduct]);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      
+      if (selectedProduct) {
+        // Update existing product
+        const updatePayload = {
+          productId: selectedProduct.productId,
+          productName: formData.productName
+        };
+        
+        await apiService.updateProduct(updatePayload);
+        success('Product updated successfully!');
+      } else {
+        // Add new product - only productName is required
+        const addPayload = {
+          productName: formData.productName
+        };
+        
+        await apiService.addProduct(addPayload);
+        success('Product added successfully!');
+      }
+      
+      // Reload products to get updated data
+      await loadProducts();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving product:', err);
+      error('Failed to save product. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    setProducts(products.filter(prod => prod.id !== selectedProduct.id));
-    setIsDeleteModalOpen(false);
-    setSelectedProduct(null);
+  const confirmDelete = async () => {
+    try {
+      console.log(selectedProduct);
+      
+      setSaving(true);
+      await apiService.deleteProduct(selectedProduct.productId);
+      success('Product deleted successfully!');
+      
+      // Reload products to get updated data
+      await loadProducts();
+      setIsDeleteModalOpen(false);
+      setSelectedProduct(null);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      error('Failed to delete product. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = Array.isArray(products) ? products.filter(product =>
+    (product.productName || product.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   return (
     <div className="p-6">
@@ -144,96 +165,69 @@ const ProductPage = () => {
 
       {/* Products Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Weight
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Package className="w-5 h-5 text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {product.name}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {product.sku}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {product.category}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {product.weight}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      ₹{product.price.toLocaleString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      product.status === 'Active' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    }`}>
-                      {product.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-500 dark:text-gray-300">Loading products...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Product Name
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {!Array.isArray(filteredProducts) || filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="px-6 py-12 text-center text-gray-500 dark:text-gray-300">
+                      {!Array.isArray(filteredProducts) ? 'Error loading products' : 'No products found'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProducts.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Package className="w-5 h-5 text-gray-400 mr-3" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {product.productName || product.name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            disabled={saving}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            disabled={saving}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Modal */}
@@ -245,87 +239,33 @@ const ProductPage = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Product Name
+              Product Name *
             </label>
             <Input
               type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.productName}
+              onChange={(e) => setFormData({ productName: e.target.value })}
               placeholder="Enter product name"
+              required
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              SKU
-            </label>
-            <Input
-              type="text"
-              value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              placeholder="Enter SKU"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Category
-            </label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">Select Category</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Weight
-              </label>
-              <Input
-                type="text"
-                value={formData.weight}
-                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                placeholder="e.g., 5.2g"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Price (₹)
-              </label>
-              <Input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="0"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
+              disabled={saving}
             >
               Cancel
             </Button>
-            <Button onClick={handleSave}>
-              {selectedProduct ? 'Update' : 'Add'} Product
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  {selectedProduct ? 'Updating...' : 'Adding...'}
+                </>
+              ) : (
+                `${selectedProduct ? 'Update' : 'Add'} Product`
+              )}
             </Button>
           </div>
         </div>
@@ -337,11 +277,24 @@ const ProductPage = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
         title="Delete Product"
-        message={`Are you sure you want to delete "${selectedProduct?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        message={`Are you sure you want to delete "${selectedProduct?.productName || selectedProduct?.name}"? This action cannot be undone.`}
+        confirmText={saving ? "Deleting..." : "Delete"}
         cancelText="Cancel"
         variant="danger"
+        disabled={saving}
       />
+
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };

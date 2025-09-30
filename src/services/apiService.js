@@ -223,6 +223,132 @@ class ApiService {
   async deleteCategory(categoryId) {
     return this.delete(`/api/MasterData/categories/${categoryId}`);
   }
+
+  // Master Data - Product specific methods
+  async getProducts() {
+    return this.get('/api/MasterData/products');
+  }
+
+  async getProductById(productId) {
+    return this.get(`/api/MasterData/products/${productId}`);
+  }
+
+  async addProduct(productData) {
+    return this.post('/api/MasterData/products', productData);
+  }
+
+  async updateProduct(productData) {
+    return this.put('/api/MasterData/products', productData);
+  }
+
+  async deleteProduct(productId) {
+    return this.delete(`/api/MasterData/products/${productId}`);
+  }
+
+  // Master Data - Design specific methods
+  async getDesigns() {
+    return this.get('/api/MasterData/designs');
+  }
+
+  async getDesignById(designId) {
+    return this.get(`/api/MasterData/designs/${designId}`);
+  }
+
+  async addDesign(designData) {
+    return this.post('/api/MasterData/designs', designData);
+  }
+
+  async updateDesign(designData) {
+    return this.put('/api/MasterData/designs', designData);
+  }
+
+  async deleteDesign(designId) {
+    return this.delete(`/api/MasterData/designs/${designId}`);
+  }
+
+  // Master Data - Purity specific methods
+  async getPurities() {
+    return this.get('/api/MasterData/purities');
+  }
+
+  async getPurityById(purityId) {
+    return this.get(`/api/MasterData/purities/${purityId}`);
+  }
+
+  async addPurity(purityData) {
+    return this.post('/api/MasterData/purities', purityData);
+  }
+
+  async updatePurity(purityData) {
+    return this.put('/api/MasterData/purities', purityData);
+  }
+
+  async deletePurity(purityId) {
+    return this.delete(`/api/MasterData/purities/${purityId}`);
+  }
+
+  // Master Data - Box specific methods
+  async getBoxes() {
+    return this.get('/api/MasterData/boxes');
+  }
+
+  async getBoxById(boxId) {
+    return this.get(`/api/MasterData/boxes/${boxId}`);
+  }
+
+  async addBox(boxData) {
+    return this.post('/api/MasterData/boxes', boxData);
+  }
+
+  async updateBox(boxData) {
+    return this.put('/api/MasterData/boxes', boxData);
+  }
+
+  async deleteBox(boxId) {
+    return this.delete(`/api/MasterData/boxes/${boxId}`);
+  }
+
+  // Master Data - Branch specific methods
+  async getBranches() {
+    return this.get('/api/MasterData/branches');
+  }
+
+  async getBranchById(branchId) {
+    return this.get(`/api/MasterData/branches/${branchId}`);
+  }
+
+  async addBranch(branchData) {
+    return this.post('/api/MasterData/branches', branchData);
+  }
+
+  async updateBranch(branchData) {
+    return this.put('/api/MasterData/branches', branchData);
+  }
+
+  async deleteBranch(branchId) {
+    return this.delete(`/api/MasterData/branches/${branchId}`);
+  }
+
+  // Master Data - Counter specific methods
+  async getCounters() {
+    return this.get('/api/MasterData/counters');
+  }
+
+  async getCounterById(counterId) {
+    return this.get(`/api/MasterData/counters/${counterId}`);
+  }
+
+  async addCounter(counterData) {
+    return this.post('/api/MasterData/counters', counterData);
+  }
+
+  async updateCounter(counterData) {
+    return this.put('/api/MasterData/counters', counterData);
+  }
+
+  async deleteCounter(counterId) {
+    return this.delete(`/api/MasterData/counters/${counterId}`);
+  }
 }
 
 // Create and export a singleton instance

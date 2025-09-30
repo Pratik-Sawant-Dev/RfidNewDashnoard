@@ -1,76 +1,72 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Search, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Search, Award, Loader2 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import ConfirmAlert from '../../components/ui/ConfirmAlert';
+import Toast from '../../components/ui/Toast';
+import useToast from '../../hooks/useToast';
+import apiService from '../../services/apiService';
 
 const PurityPage = () => {
-  const [purities, setPurities] = useState([
-    { 
-      id: 1, 
-      name: '18K Gold', 
-      code: '18K', 
-      percentage: '75%', 
-      description: '18 karat gold purity', 
-      status: 'Active', 
-      createdAt: '2024-01-15' 
-    },
-    { 
-      id: 2, 
-      name: '22K Gold', 
-      code: '22K', 
-      percentage: '91.67%', 
-      description: '22 karat gold purity', 
-      status: 'Active', 
-      createdAt: '2024-01-10' 
-    },
-    { 
-      id: 3, 
-      name: '24K Gold', 
-      code: '24K', 
-      percentage: '99.9%', 
-      description: '24 karat pure gold', 
-      status: 'Active', 
-      createdAt: '2024-01-08' 
-    },
-    { 
-      id: 4, 
-      name: 'Sterling Silver', 
-      code: '925', 
-      percentage: '92.5%', 
-      description: 'Sterling silver standard', 
-      status: 'Active', 
-      createdAt: '2024-01-05' 
-    },
-  ]);
-
+  const [purities, setPurities] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPurity, setSelectedPurity] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    percentage: '',
-    description: '',
-    status: 'Active'
+    purityName: ''
   });
+  const { toasts, success, error, removeToast } = useToast();
+
+  // Load purities on component mount
+  useEffect(() => {
+    loadPurities();
+  }, []);
+
+  const loadPurities = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getPurities();
+      console.log('API Response:', response); // Debug log
+      
+      // Ensure response is an array
+      let puritiesArray = [];
+      if (Array.isArray(response)) {
+        puritiesArray = response;
+      } else if (response && Array.isArray(response.data)) {
+        puritiesArray = response.data;
+      } else if (response && response.purities && Array.isArray(response.purities)) {
+        puritiesArray = response.purities;
+      } else {
+        console.warn('Unexpected API response format:', response);
+        puritiesArray = [];
+      }
+      
+      console.log('Purities array:', puritiesArray); // Debug log to see the structure
+      setPurities(puritiesArray);
+    } catch (err) {
+      console.error('Error loading purities:', err);
+      error('Failed to load purities. Please try again.');
+      setPurities([]); // Ensure purities is always an array
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAdd = () => {
     setSelectedPurity(null);
-    setFormData({ name: '', code: '', percentage: '', description: '', status: 'Active' });
+    setFormData({ purityName: '' });
     setIsModalOpen(true);
   };
 
   const handleEdit = (purity) => {
+    console.log('Selected purity for edit:', purity); // Debug log
     setSelectedPurity(purity);
     setFormData({
-      name: purity.name,
-      code: purity.code,
-      percentage: purity.percentage,
-      description: purity.description,
-      status: purity.status
+      purityName: purity.purityName || purity.name || ''
     });
     setIsModalOpen(true);
   };
@@ -80,37 +76,66 @@ const PurityPage = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (selectedPurity) {
-      // Update existing purity
-      setPurities(purities.map(pur => 
-        pur.id === selectedPurity.id 
-          ? { ...pur, ...formData }
-          : pur
-      ));
-    } else {
-      // Add new purity
-      const newPurity = {
-        id: Date.now(),
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setPurities([...purities, newPurity]);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      
+      if (selectedPurity) {
+        // Update existing purity
+        const updatePayload = {
+          purityId: selectedPurity.purityId || selectedPurity.id,
+          purityName: formData.purityName
+        };
+        
+        console.log('Update payload:', updatePayload); // Debug log
+        console.log('Selected purity:', selectedPurity); // Debug log
+        
+        await apiService.updatePurity(updatePayload);
+        success('Purity updated successfully!');
+      } else {
+        // Add new purity - only purityName is required
+        const addPayload = {
+          purityName: formData.purityName
+        };
+        
+        await apiService.addPurity(addPayload);
+        success('Purity added successfully!');
+      }
+      
+      // Reload purities to get updated data
+      await loadPurities();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving purity:', err);
+      error('Failed to save purity. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    setPurities(purities.filter(pur => pur.id !== selectedPurity.id));
-    setIsDeleteModalOpen(false);
-    setSelectedPurity(null);
+  const confirmDelete = async () => {
+    try {
+      console.log(selectedPurity);
+      
+      setSaving(true);
+      await apiService.deletePurity(selectedPurity.purityId || selectedPurity.id);
+      success('Purity deleted successfully!');
+      
+      // Reload purities to get updated data
+      await loadPurities();
+      setIsDeleteModalOpen(false);
+      setSelectedPurity(null);
+    } catch (err) {
+      console.error('Error deleting purity:', err);
+      error('Failed to delete purity. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const filteredPurities = purities.filter(purity =>
-    purity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    purity.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    purity.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPurities = Array.isArray(purities) ? purities.filter(purity =>
+    (purity.purityName || purity.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   return (
     <div className="p-6">
@@ -145,88 +170,69 @@ const PurityPage = () => {
 
       {/* Purities Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Purity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Code
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Percentage
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredPurities.map((purity) => (
-                <tr key={purity.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Award className="w-5 h-5 text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {purity.name}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {purity.code}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {purity.percentage}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 dark:text-gray-300 max-w-xs truncate">
-                      {purity.description}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      purity.status === 'Active' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    }`}>
-                      {purity.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(purity)}
-                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(purity)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-500 dark:text-gray-300">Loading purities...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Purity Name
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {!Array.isArray(filteredPurities) || filteredPurities.length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="px-6 py-12 text-center text-gray-500 dark:text-gray-300">
+                      {!Array.isArray(filteredPurities) ? 'Error loading purities' : 'No purities found'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPurities.map((purity) => (
+                    <tr key={purity.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Award className="w-5 h-5 text-gray-400 mr-3" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {purity.purityName || purity.name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(purity)}
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            disabled={saving}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(purity)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            disabled={saving}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Modal */}
@@ -238,71 +244,33 @@ const PurityPage = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Purity Name
+              Purity Name *
             </label>
             <Input
               type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., 18K Gold"
+              value={formData.purityName}
+              onChange={(e) => setFormData({ purityName: e.target.value })}
+              placeholder="e.g., 22K"
+              required
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Purity Code
-            </label>
-            <Input
-              type="text"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              placeholder="e.g., 18K, 925"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Percentage
-            </label>
-            <Input
-              type="text"
-              value={formData.percentage}
-              onChange={(e) => setFormData({ ...formData, percentage: e.target.value })}
-              placeholder="e.g., 75%, 92.5%"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter purity description"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-              rows="3"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
+              disabled={saving}
             >
               Cancel
             </Button>
-            <Button onClick={handleSave}>
-              {selectedPurity ? 'Update' : 'Add'} Purity
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  {selectedPurity ? 'Updating...' : 'Adding...'}
+                </>
+              ) : (
+                `${selectedPurity ? 'Update' : 'Add'} Purity`
+              )}
             </Button>
           </div>
         </div>
@@ -314,11 +282,24 @@ const PurityPage = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
         title="Delete Purity"
-        message={`Are you sure you want to delete "${selectedPurity?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        message={`Are you sure you want to delete "${selectedPurity?.purityName || selectedPurity?.name}"? This action cannot be undone.`}
+        confirmText={saving ? "Deleting..." : "Delete"}
         cancelText="Cancel"
         variant="danger"
+        disabled={saving}
       />
+
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };

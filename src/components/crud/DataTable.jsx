@@ -307,8 +307,79 @@ const DataTable = ({
       </div>
 
       {/* Pagination */}
-      <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+        {/* Mobile Layout */}
+        <div className="block sm:hidden space-y-3">
+          {/* Results info */}
+          <div className="text-center text-sm text-gray-700 dark:text-gray-300">
+            Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length} results
+          </div>
+          
+          {/* Rows per page selector */}
+          <div className="flex items-center justify-center space-x-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">Rows per page:</span>
+            <SimpleSelect
+              value={rowsPerPage}
+              onChange={(value) => setRowsPerPage(Number(value))}
+              options={[
+                { value: 25, label: '25' },
+                { value: 50, label: '50' },
+                { value: 100, label: '100' }
+              ]}
+            />
+          </div>
+          
+          {/* Navigation controls */}
+          <div className="flex items-center justify-center space-x-2">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 2) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 1) {
+                  pageNum = totalPages - 2 + i;
+                } else {
+                  pageNum = currentPage - 1 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-1.5 text-sm rounded transition-colors duration-200 ${
+                      currentPage === pageNum
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Rows per page selector */}
             <div className="flex items-center space-x-2">
