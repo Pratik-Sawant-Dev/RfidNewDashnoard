@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { isAdminFromToken, isTokenExpired, getTokenClaims } from '../../utils/jwtUtils';
 
 // Initial state for authentication
 const initialState = {
@@ -31,6 +32,11 @@ const initialState = {
     isActive: false,
     createdOn: null,
     lastLoginDate: null,
+    branchId: null,
+    branchName: null,
+    counterId: null,
+    counterName: null,
+    permissions: [],
   },
   
   // Error handling
@@ -59,7 +65,7 @@ const authSlice = createSlice({
       state.token = token;
       state.expiresAt = expiresAt;
       
-      // Store user information
+      // Store user information including permissions
       state.user = {
         userId: user.userId,
         userName: user.userName,
@@ -80,6 +86,11 @@ const authSlice = createSlice({
         isActive: user.isActive,
         createdOn: user.createdOn,
         lastLoginDate: user.lastLoginDate,
+        branchId: user.branchId,
+        branchName: user.branchName,
+        counterId: user.counterId,
+        counterName: user.counterName,
+        permissions: user.permissions || [],
       };
     },
     
@@ -92,13 +103,28 @@ const authSlice = createSlice({
       state.user = initialState.user;
     },
     
-    // Logout action
-    logout: (state) => {
+    // Logout actions
+    logoutStart: (state) => {
+      state.isLoading = true;
+      state.error = null;
+    },
+    
+    logoutSuccess: (state) => {
       state.isAuthenticated = false;
       state.token = null;
       state.expiresAt = null;
       state.user = initialState.user;
       state.error = null;
+      state.isLoading = false;
+    },
+    
+    logoutFailure: (state, action) => {
+      // Even if API call fails, we still clear local state
+      state.isAuthenticated = false;
+      state.token = null;
+      state.expiresAt = null;
+      state.user = initialState.user;
+      state.error = action.payload;
       state.isLoading = false;
     },
     
@@ -158,7 +184,9 @@ export const {
   loginStart,
   loginSuccess,
   loginFailure,
-  logout,
+  logoutStart,
+  logoutSuccess,
+  logoutFailure,
   clearError,
   updateUser,
   checkTokenValidity,
@@ -183,7 +211,65 @@ export const selectUserInfo = (state) => ({
 export const selectAuthError = (state) => state.auth.error;
 export const selectExpiresAt = (state) => state.auth.expiresAt;
 
+// Token-based selectors
+export const selectIsAdminFromToken = (state) => {
+  const token = state.auth.token;
+  if (!token) return false;
+  return isAdminFromToken(token);
+};
+
+export const selectTokenClaims = (state) => {
+  const token = state.auth.token;
+  if (!token) return null;
+  return getTokenClaims(token);
+};
+
+export const selectIsTokenValid = (state) => {
+  const token = state.auth.token;
+  if (!token) return false;
+  return !isTokenExpired(token);
+};
+
 // Selector to get complete auth state
 export const selectAuthState = (state) => state.auth;
+
+// Permission-related selectors
+export const selectUserPermissions = (state) => state.auth.user.permissions || [];
+
+// Helper selector to get permissions for a specific module
+export const selectModulePermissions = (module) => (state) => {
+  const permissions = state.auth.user.permissions || [];
+  return permissions.find(p => p.module === module) || null;
+};
+
+// Helper selector to check if user has specific permission
+export const selectHasPermission = (module, action) => (state) => {
+  const permissions = state.auth.user.permissions || [];
+  const modulePermissions = permissions.find(p => p.module === module);
+  if (!modulePermissions) return false;
+  
+  switch (action) {
+    case 'view':
+      return modulePermissions.canView;
+    case 'create':
+      return modulePermissions.canCreate;
+    case 'edit':
+      return modulePermissions.canEdit;
+    case 'delete':
+      return modulePermissions.canDelete;
+    case 'export':
+      return modulePermissions.canExport;
+    case 'import':
+      return modulePermissions.canImport;
+    default:
+      return false;
+  }
+};
+
+// Helper selector to check if user has any permission for a module
+export const selectHasModuleAccess = (module) => (state) => {
+  const permissions = state.auth.user.permissions || [];
+  return permissions.some(p => p.module === module);
+};
 
 export default authSlice.reducer;

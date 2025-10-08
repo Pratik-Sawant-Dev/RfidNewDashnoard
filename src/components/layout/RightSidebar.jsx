@@ -151,8 +151,8 @@ const RightSidebar = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
     onClose();
   };

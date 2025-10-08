@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from './contexts/ThemeContext';
 import store from './store';
+import { initializeApp } from './utils/initializeApp';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -42,6 +43,12 @@ import Header from './components/layout/Header';
 import RightSidebar from './components/layout/RightSidebar';
 import ApiSettingsComponent from './components/ApiSettingsComponent';
 import AuthInitializer from './components/AuthInitializer';
+import SmartPermissionLoader from './components/SmartPermissionLoader';
+
+// Route Protection Components
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import PublicRoute from './components/PublicRoute';
 
 // Main Layout Component
 const MainLayout = ({ children }) => {
@@ -79,216 +86,284 @@ const MainLayout = ({ children }) => {
 };
 
 function App() {
+  // Initialize app services
+  initializeApp();
+
   return (
     <Provider store={store}>
       <ThemeProvider>
         <AuthInitializer />
+        <SmartPermissionLoader />
         <Router>
           <div className="App">
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/login" element={
+              <PublicRoute restricted={true}>
+                <LoginPage />
+              </PublicRoute>
+            } />
+            <Route path="/onboarding" element={
+              <PublicRoute restricted={true}>
+                <OnboardingPage />
+              </PublicRoute>
+            } />
+            <Route path="/forgot-password" element={
+              <PublicRoute restricted={true}>
+                <ForgotPasswordPage />
+              </PublicRoute>
+            } />
             
             {/* Protected Routes with Layout */}
             <Route path="/dashboard" element={
-              <MainLayout>
-                <DashboardPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <DashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/purchase-entry" element={
-              <MainLayout>
-                <PurchaseEntryPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <PurchaseEntryPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/add-stock" element={
-              <MainLayout>
-                <AddStockPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <AddStockPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/invoices" element={
-              <MainLayout>
-                <InvoicePage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <InvoicePage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             {/* Member Routes */}
             <Route path="/member/admin" element={
-              <MainLayout>
-                <AdminPage />
-              </MainLayout>
+              <AdminRoute>
+                <MainLayout>
+                  <AdminPage />
+                </MainLayout>
+              </AdminRoute>
             } />
             
             <Route path="/member/user" element={
-              <MainLayout>
-                <UserPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <UserPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
 
             {/* Management Routes */}
             <Route path="/management/users" element={
-              <MainLayout>
-                <UserManagementPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <UserManagementPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/management/monitoring" element={
-              <MainLayout>
-                <SystemMonitoringPage />
-              </MainLayout>
+              <AdminRoute>
+                <MainLayout>
+                  <SystemMonitoringPage />
+                </MainLayout>
+              </AdminRoute>
             } />
             
             {/* Master Routes */}
             <Route path="/master/category" element={
-              <MainLayout>
-                <CategoryPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <CategoryPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/master/product" element={
-              <MainLayout>
-                <ProductPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <ProductPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/master/design" element={
-              <MainLayout>
-                <DesignPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <DesignPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/master/purity" element={
-              <MainLayout>
-                <PurityPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <PurityPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/master/branch" element={
-              <MainLayout>
-                <BranchPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <BranchPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/master/counter" element={
-              <MainLayout>
-                <CounterPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <CounterPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/master/box" element={
-              <MainLayout>
-                <BoxPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <BoxPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             {/* Reports Routes */}
             <Route path="/reports/stock" element={
-              <MainLayout>
-                <StockReportsPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <StockReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/reports/sales" element={
-              <MainLayout>
-                <SalesReportsPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <SalesReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/reports/purchase" element={
-              <MainLayout>
-                <PurchaseReportsPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <PurchaseReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             {/* Inventory Sub-routes */}
             <Route path="/inventory/stock" element={
-              <MainLayout>
-                <AddStockPage />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <AddStockPage />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/inventory/catalog" element={
-              <MainLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Product Catalog
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Product catalog management coming soon...
-                  </p>
-                </div>
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      Product Catalog
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Product catalog management coming soon...
+                    </p>
+                  </div>
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/inventory/rfid-tags" element={
-              <MainLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    RFID Tags Management
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    RFID tags management coming soon...
-                  </p>
-                </div>
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      RFID Tags Management
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      RFID tags management coming soon...
+                    </p>
+                  </div>
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             {/* Sales Sub-routes */}
             <Route path="/sales/pos" element={
-              <MainLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Point of Sale
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Point of sale system coming soon...
-                  </p>
-                </div>
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      Point of Sale
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Point of sale system coming soon...
+                    </p>
+                  </div>
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/sales/history" element={
-              <MainLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Sales History
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Sales history coming soon...
-                  </p>
-                </div>
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      Sales History
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Sales history coming soon...
+                    </p>
+                  </div>
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/sales/customers" element={
-              <MainLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Customer Management
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Customer management coming soon...
-                  </p>
-                </div>
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      Customer Management
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Customer management coming soon...
+                    </p>
+                  </div>
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             {/* Settings */}
             <Route path="/settings" element={
-              <MainLayout>
-                <ApiSettingsComponent />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <ApiSettingsComponent />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             <Route path="/settings/api" element={
-              <MainLayout>
-                <ApiSettingsComponent />
-              </MainLayout>
+              <ProtectedRoute>
+                <MainLayout>
+                  <ApiSettingsComponent />
+                </MainLayout>
+              </ProtectedRoute>
             } />
             
             {/* 404 Route */}

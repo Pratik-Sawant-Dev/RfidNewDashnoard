@@ -184,7 +184,7 @@ const OnboardingPage = () => {
   };
 
   const renderStep1 = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Input
         label="Organization Name"
         name="organisationName"
@@ -264,7 +264,7 @@ const OnboardingPage = () => {
   );
 
   const renderStep2 = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Input
         label="Full Name"
         name="fullName"
@@ -310,18 +310,18 @@ const OnboardingPage = () => {
   );
 
   const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+    <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
           Account Summary
         </h3>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           Please review your information before completing registration
         </p>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Organization:
@@ -372,10 +372,10 @@ const OnboardingPage = () => {
           </div>
         </div>
 
-        <div className="border-t pt-4">
+        <div className="border-t pt-3">
           <div className="flex items-center justify-center space-x-2">
-            <Shield className="w-5 h-5 text-primary-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-300">
+            <Shield className="w-4 h-4 text-primary-600" />
+            <span className="text-xs text-gray-600 dark:text-gray-300">
               Administrator Account - Full Access
             </span>
           </div>
@@ -385,51 +385,71 @@ const OnboardingPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-primary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Background decoration */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Enhanced background decoration for light mode */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 dark:bg-blue-800 rounded-full opacity-20 animate-bounce-gentle"></div>
+        {/* Primary gradient circles */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-300 to-indigo-400 dark:from-blue-800 dark:to-indigo-900 rounded-full opacity-30 dark:opacity-20 animate-bounce-gentle"></div>
         <div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-200 dark:bg-primary-800 rounded-full opacity-20 animate-bounce-gentle"
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-amber-300 to-orange-400 dark:from-primary-800 dark:to-amber-900 rounded-full opacity-25 dark:opacity-20 animate-bounce-gentle"
           style={{ animationDelay: "1s" }}
         ></div>
+        
+        {/* Additional decorative elements for light mode */}
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-br from-purple-200 to-pink-300 dark:from-purple-800 dark:to-pink-900 rounded-full opacity-20 dark:opacity-10 animate-pulse-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-gradient-to-br from-emerald-200 to-teal-300 dark:from-emerald-800 dark:to-teal-900 rounded-full opacity-25 dark:opacity-10 animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
+        
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]"></div>
       </div>
 
-      {/* Two-column layout for large screens */}
+      {/* Two-column layout for large screens - Optimized for no scrolling */}
       <div className="relative z-10 min-h-screen flex">
-        {/* Left side - Jewelry Image (hidden on mobile) */}
-        <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:p-8">
-          <div className="relative w-full h-full max-w-lg">
+        {/* Left side - Header Content (hidden on mobile) */}
+        <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:p-6">
+          <div className="relative w-full h-full max-w-md">
             {/* Animated background elements */}
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-primary-900 dark:to-gold-900 rounded-3xl transform rotate-3 animate-pulse-slow"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-rose-100 via-pink-50 to-purple-100 dark:from-gold-800 dark:to-amber-800 rounded-3xl transform -rotate-2 animate-float"></div>
             
             {/* Floating decorative elements */}
-            <div className="absolute top-6 right-6 w-10 h-10 bg-emerald-200 dark:bg-emerald-700 rounded-full animate-bounce-gentle opacity-60"></div>
-            <div className="absolute bottom-8 left-8 w-8 h-8 bg-rose-300 dark:bg-rose-600 rounded-full animate-bounce-gentle opacity-70" style={{ animationDelay: '1.5s' }}></div>
-            <div className="absolute top-1/3 right-8 w-6 h-6 bg-purple-300 dark:bg-purple-600 rounded-full animate-bounce-gentle opacity-50" style={{ animationDelay: '0.8s' }}></div>
-            <div className="absolute bottom-1/3 left-12 w-4 h-4 bg-cyan-300 dark:bg-cyan-600 rounded-full animate-bounce-gentle opacity-60" style={{ animationDelay: '2.2s' }}></div>
+            <div className="absolute top-4 right-4 w-8 h-8 bg-emerald-200 dark:bg-emerald-700 rounded-full animate-bounce-gentle opacity-60"></div>
+            <div className="absolute bottom-6 left-6 w-6 h-6 bg-rose-300 dark:bg-rose-600 rounded-full animate-bounce-gentle opacity-70" style={{ animationDelay: '1.5s' }}></div>
+            <div className="absolute top-1/3 right-6 w-5 h-5 bg-purple-300 dark:bg-purple-600 rounded-full animate-bounce-gentle opacity-50" style={{ animationDelay: '0.8s' }}></div>
             
-            {/* Main card */}
-            <div className="relative bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20 dark:border-gray-700/50">
+            {/* Main card with header content */}
+            <div className="relative bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-white/20 dark:border-gray-700/50">
               <div className="text-center">
+                {/* Header with logo and title */}
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <div className="relative">
+                    <Gem className="w-8 h-8 text-primary-600 dark:text-primary-400 drop-shadow-lg" />
+                    <div className="absolute inset-0 w-8 h-8">
+                      <div className="w-full h-full rounded-full bg-primary-200 dark:bg-primary-800 animate-ping opacity-20"></div>
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 via-blue-600 to-indigo-600 dark:from-primary-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent font-elegant">
+                    JewelRFID
+                  </span>
+                </div>
+
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Get Started with JewelRFID
+                </h1>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  Set up your jewelry management system in minutes
+                </p>
+                
                 {/* Animated gem icon */}
-                <div className="relative mb-6">
-                  <Gem className="w-24 h-24 text-primary-500 mx-auto drop-shadow-lg" />
-                  <div className="absolute inset-0 w-24 h-24 mx-auto">
+                <div className="relative mb-4">
+                  <Gem className="w-16 h-16 text-primary-500 mx-auto drop-shadow-lg" />
+                  <div className="absolute inset-0 w-16 h-16 mx-auto">
                     <div className="w-full h-full rounded-full bg-primary-200 dark:bg-primary-800 animate-ping opacity-20"></div>
                   </div>
                 </div>
                 
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 animate-fade-in-up">
-                  Start Your Journey
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                  Join thousands of jewelry businesses already using JewelRFID
-                </p>
-                
                 {/* Animated feature list */}
-                <div className="grid grid-cols-1 gap-4 text-sm">
+                <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-center text-gray-600 dark:text-gray-300 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                     <div className="w-2 h-2 bg-primary-500 rounded-full mr-2 animate-pulse"></div>
                     Easy Setup Process
@@ -448,45 +468,29 @@ const OnboardingPage = () => {
           </div>
         </div>
 
-        {/* Right side - Onboarding Form */}
-        <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
-          <div className="w-full max-w-2xl">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <Gem className="w-8 h-8 text-primary-500" />
-                <span className="text-2xl font-bold text-gradient font-elegant">
-                  JewelRFID
-                </span>
-              </div>
+        {/* Right side - Onboarding Form - Compact layout */}
+        <div className="flex-1 flex items-center justify-center p-4 lg:p-6">
+          <div className="w-full max-w-xl">
 
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Get Started with JewelRFID
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300">
-                Set up your jewelry management system in minutes
-              </p>
-            </div>
-
-            {/* Progress Steps */}
-            <div className="flex justify-center mb-8">
-              <div className="flex items-center space-x-4">
+            {/* Compact Progress Steps */}
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center space-x-3 bg-white/50 dark:bg-gray-800/50 rounded-xl p-3 backdrop-blur-sm border border-white/20 dark:border-gray-700/50">
                 {steps.map((step, index) => (
                   <div key={step.number} className="flex items-center">
                     <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                      className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md transition-all duration-300 ${
                         currentStep >= step.number
-                          ? "bg-primary-600 text-white"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                          ? "bg-gradient-to-r from-primary-600 to-blue-600 text-white shadow-primary-200 dark:shadow-primary-800"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                       }`}
                     >
                       <step.icon className="w-5 h-5" />
                     </div>
                     {index < steps.length - 1 && (
                       <div
-                        className={`w-16 h-1 mx-2 ${
+                        className={`w-12 h-1.5 mx-2 rounded-full transition-all duration-300 ${
                           currentStep > step.number
-                            ? "bg-primary-600"
+                            ? "bg-gradient-to-r from-primary-600 to-blue-600"
                             : "bg-gray-200 dark:bg-gray-700"
                         }`}
                       />
@@ -496,15 +500,15 @@ const OnboardingPage = () => {
               </div>
             </div>
 
-            {/* Form */}
-            <Card>
+            {/* Compact Form */}
+            <Card className="shadow-xl border border-white/20 dark:border-gray-700/50 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
               <form onSubmit={handleSubmit}>
                 {currentStep === 1 && renderStep1()}
                 {currentStep === 2 && renderStep2()}
                 {currentStep === 3 && renderStep3()}
 
                 {/* Navigation Buttons */}
-                <div className="flex justify-between mt-8">
+                <div className="flex justify-between mt-6">
                   <Button
                     type="button"
                     variant="outline"
@@ -547,7 +551,7 @@ const OnboardingPage = () => {
               </form>
 
               {/* Back to Home - moved to bottom of card */}
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
                 <Link
                   to="/"
                   className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"

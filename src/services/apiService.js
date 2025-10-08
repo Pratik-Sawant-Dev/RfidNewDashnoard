@@ -1,12 +1,32 @@
 import axios from 'axios';
-import store from '../store';
+import { getApiConfig, getAuthToken, getBaseUrl as getConfigBaseUrl } from '../config/apiConfig';
 import { selectBaseUrl, selectApiConfig } from '../store/slices/apiSlice';
 import { selectToken } from '../store/slices/authSlice';
 
+// Lazy store import to avoid circular dependency
+let store = null;
+
+const getStore = () => {
+  if (!store) {
+    // Import store dynamically to avoid circular dependency
+    try {
+      store = require('../store').default;
+    } catch (error) {
+      console.warn('Store not available yet, using fallback config');
+      return null;
+    }
+  }
+  return store;
+};
+
 // Create axios instance
 const createAxiosInstance = () => {
-  const state = store.getState();
-  const config = selectApiConfig(state);
+  // Get store safely
+  const currentStore = getStore();
+  const state = currentStore ? currentStore.getState() : null;
+  
+  // Use store config if available, otherwise use fallback config
+  const config = state ? selectApiConfig(state) : getApiConfig();
   
   const instance = axios.create({
     baseURL: config.baseUrl,
@@ -20,9 +40,10 @@ const createAxiosInstance = () => {
   instance.interceptors.request.use(
     (config) => {
       // Try to get token from Redux store first, then localStorage as fallback
-      const state = store.getState();
-      const reduxToken = selectToken(state);
-      const localToken = localStorage.getItem('authToken');
+      const currentStore = getStore();
+      const state = currentStore ? currentStore.getState() : null;
+      const reduxToken = state ? selectToken(state) : null;
+      const localToken = getAuthToken();
       const token = reduxToken || localToken;
       
       if (token) {
@@ -59,13 +80,24 @@ class ApiService {
 
   // Get current base URL from Redux store
   getBaseUrl() {
-    const state = store.getState();
-    return selectBaseUrl(state);
+    const currentStore = getStore();
+    const state = currentStore ? currentStore.getState() : null;
+    return state ? selectBaseUrl(state) : getConfigBaseUrl();
   }
 
   // Update axios instance when store changes
   updateConfig() {
     this.axios = createAxiosInstance();
+  }
+
+  // Method to set store reference (called after store is initialized)
+  setStore(storeInstance) {
+    store = storeInstance;
+  }
+
+  // Method to get store reference
+  getStore() {
+    return store;
   }
 
   // Generic API request method
@@ -348,6 +380,31 @@ class ApiService {
 
   async deleteCounter(counterId) {
     return this.delete(`/api/MasterData/counters/${counterId}`);
+  }
+
+  // Product specific methods
+  async createProduct(productData) {
+    return this.post('/api/Product/create', productData);
+  }
+
+  async getProductById(productId) {
+    return this.get(`/api/Product/${productId}`);
+  }
+
+  async getAllProducts() {
+    return this.get('/api/Product/all');
+  }
+
+  async searchProducts(searchParams = {}) {
+    return this.get('/api/Product/search', searchParams);
+  }
+
+  async updateProduct(productId, productData) {
+    return this.put(`/api/Product/${productId}`, productData);
+  }
+
+  async deleteProduct(productId) {
+    return this.delete(`/api/Product/${productId}`);
   }
 }
 
