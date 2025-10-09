@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Search, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import { ChevronDown, Search, Check, X } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const Select = ({ 
+const Select = forwardRef(({ 
   label, 
   options = [], 
   value, 
@@ -13,16 +13,18 @@ const Select = ({
   error,
   className = '',
   disabled = false,
+  required = false,
   ...props 
-}) => {
+}, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const selectRef = useRef(null);
-  const searchRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Filter options based on search term
   const filteredOptions = options.filter(option =>
+    option && option.label && typeof option.label === 'string' && 
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -40,15 +42,21 @@ const Select = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Focus search input when dropdown opens
+  // Focus input when dropdown opens
   useEffect(() => {
-    if (isOpen && searchable && searchRef.current) {
-      searchRef.current.focus();
+    if (isOpen && searchable && inputRef.current) {
+      inputRef.current.focus();
     }
   }, [isOpen, searchable]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
+    // Allow typing to open dropdown and filter
+    if (!isOpen && e.key.length === 1 && searchable) {
+      setIsOpen(true);
+      return;
+    }
+
     if (!isOpen) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         e.preventDefault();
@@ -77,6 +85,12 @@ const Select = ({
         }
         break;
       case 'Escape':
+        e.preventDefault();
+        setIsOpen(false);
+        setSearchTerm('');
+        setHighlightedIndex(-1);
+        break;
+      case 'Tab':
         setIsOpen(false);
         setSearchTerm('');
         setHighlightedIndex(-1);
@@ -91,12 +105,28 @@ const Select = ({
     setHighlightedIndex(-1);
   };
 
-  const handleToggle = () => {
+  const handleInputClick = () => {
     if (!disabled) {
-      setIsOpen(!isOpen);
-      setSearchTerm('');
-      setHighlightedIndex(-1);
+      setIsOpen(true);
     }
+  };
+
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange('');
+    setSearchTerm('');
+    setHighlightedIndex(-1);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    if (!isOpen) {
+      setIsOpen(true);
+    }
+    setHighlightedIndex(0);
   };
 
   const selectedOption = options.find(option => option.value === value);
@@ -106,80 +136,79 @@ const Select = ({
       {label && (
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       
       <div className="relative">
-        {/* Select Button */}
-        <button
-          type="button"
-          onClick={handleToggle}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          className={clsx(
-            'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
-            'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-            'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-            'placeholder-gray-500 dark:placeholder-gray-400',
-            'flex items-center justify-between',
-            Icon && 'pl-10',
-            error && 'border-red-500 focus:ring-red-500',
-            disabled && 'opacity-50 cursor-not-allowed',
-            className
+        {/* Typable Search Input */}
+        <div className="relative">
+          {Icon && (
+            <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
           )}
-          {...props}
-        >
-          <div className="flex items-center">
-            {Icon && (
-              <Icon className="h-5 w-5 text-gray-400 mr-3" />
-            )}
-            <span className={clsx(
-              selectedOption ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
-            )}>
-              {selectedOption ? selectedOption.label : placeholder}
-            </span>
-          </div>
-          <ChevronDown 
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchTerm || (selectedOption ? selectedOption.label : '')}
+            onChange={handleSearchChange}
+            onClick={handleInputClick}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            autoComplete="off"
             className={clsx(
-              'h-5 w-5 text-gray-400 transition-transform duration-200',
-              isOpen && 'rotate-180'
-            )} 
+              'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
+              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+              'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+              'placeholder-gray-500 dark:placeholder-gray-400',
+              Icon && 'pl-10',
+              (value || searchTerm) && 'pr-20',
+              !value && !searchTerm && 'pr-10',
+              error && 'border-red-500 focus:ring-red-500',
+              disabled && 'opacity-50 cursor-not-allowed',
+              className
+            )}
+            {...props}
           />
-        </button>
+          
+          {/* Action Icons */}
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+            {value && !disabled && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                tabIndex={-1}
+              >
+                <X className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+              </button>
+            )}
+            <ChevronDown 
+              className={clsx(
+                'h-5 w-5 text-gray-400 transition-transform duration-200 pointer-events-none',
+                isOpen && 'rotate-180'
+              )} 
+            />
+          </div>
+        </div>
 
-        {/* Dropdown */}
+        {/* Dropdown Options List */}
         {isOpen && (
           <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-hidden">
-            {/* Search Input */}
-            {searchable && (
-              <div className="p-2 border-b border-gray-200 dark:border-gray-600">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search options..."
-                    className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  />
-                </div>
-              </div>
-            )}
-
             {/* Options List */}
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option, index) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => handleSelect(option)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
                     className={clsx(
                       'w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600',
-                      'flex items-center justify-between',
+                      'flex items-center justify-between transition-colors',
                       index === highlightedIndex && 'bg-gray-100 dark:bg-gray-600',
-                      value === option.value && 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                      value === option.value && 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
                     )}
                   >
                     <span>{option.label}</span>
@@ -189,7 +218,8 @@ const Select = ({
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="px-3 py-6 text-sm text-center text-gray-500 dark:text-gray-400">
+                  <Search className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   No options found
                 </div>
               )}
@@ -203,6 +233,8 @@ const Select = ({
       )}
     </div>
   );
-};
+});
+
+Select.displayName = 'Select';
 
 export default Select;

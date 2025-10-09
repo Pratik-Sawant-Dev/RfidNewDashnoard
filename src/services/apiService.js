@@ -406,6 +406,24 @@ class ApiService {
   async deleteProduct(productId) {
     return this.delete(`/api/Product/${productId}`);
   }
+
+  // Product with images
+  async createProductWithImages(formData) {
+    return this.post('/api/Product/create-with-images', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  // Bulk upload products
+  async bulkUploadProducts(formData) {
+    return this.post('/api/Product/bulk-upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
 }
 
 // Create and export a singleton instance

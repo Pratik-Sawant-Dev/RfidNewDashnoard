@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { clsx } from 'clsx';
 import { Eye, EyeOff } from 'lucide-react';
 
-const Input = ({ 
+const Input = forwardRef(({ 
   label, 
   error, 
   className = '', 
   type = 'text',
   showPasswordToggle = false,
   icon: Icon,
+  required = false,
   ...props 
-}) => {
+}, ref) => {
   const [showPassword, setShowPassword] = useState(false);
   const [inputType, setInputType] = useState(type);
 
@@ -30,6 +31,7 @@ const Input = ({
       {label && (
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <div className="relative">
@@ -39,6 +41,7 @@ const Input = ({
           </div>
         )}
         <input
+          ref={ref}
           type={inputType}
           className={clsx(
             'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
@@ -72,6 +75,8 @@ const Input = ({
       )}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export default Input;
