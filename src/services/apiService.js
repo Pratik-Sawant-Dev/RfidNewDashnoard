@@ -409,20 +409,62 @@ class ApiService {
 
   // Product with images
   async createProductWithImages(formData) {
-    return this.post('/api/Product/create-with-images', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    // Create a new axios instance specifically for FormData uploads
+    const currentStore = getStore();
+    const state = currentStore ? currentStore.getState() : null;
+    const config = state ? selectApiConfig(state) : getApiConfig();
+    const reduxToken = state ? selectToken(state) : null;
+    const localToken = getAuthToken();
+    const token = reduxToken || localToken;
+    
+    const uploadInstance = axios.create({
+      baseURL: config.baseUrl,
+      timeout: config.timeout,
+      // Don't set Content-Type for FormData - let axios set it automatically with boundary
     });
+
+    // Add auth token to headers
+    if (token) {
+      uploadInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await uploadInstance.post('/api/Product/create-with-images', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Product with images creation failed:', error);
+      throw error;
+    }
   }
 
   // Bulk upload products
   async bulkUploadProducts(formData) {
-    return this.post('/api/Product/bulk-upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    // Create a new axios instance specifically for FormData uploads
+    const currentStore = getStore();
+    const state = currentStore ? currentStore.getState() : null;
+    const config = state ? selectApiConfig(state) : getApiConfig();
+    const reduxToken = state ? selectToken(state) : null;
+    const localToken = getAuthToken();
+    const token = reduxToken || localToken;
+    
+    const uploadInstance = axios.create({
+      baseURL: config.baseUrl,
+      timeout: config.timeout,
+      // Don't set Content-Type for FormData - let axios set it automatically with boundary
     });
+
+    // Add auth token to headers
+    if (token) {
+      uploadInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await uploadInstance.post('/api/Product/bulk-upload', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Bulk upload failed:', error);
+      throw error;
+    }
   }
 }
 

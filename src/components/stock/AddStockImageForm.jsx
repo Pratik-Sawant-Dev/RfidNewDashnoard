@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import { ToastContainer } from '../ui/Toast';
 import apiService from '../../services/apiService';
 import useToast from '../../hooks/useToast';
 
@@ -35,7 +36,7 @@ const AddStockImageForm = () => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const { success, error } = useToast();
+  const { toasts, success, error, removeToast } = useToast();
 
   // Master data states
   const [categories, setCategories] = useState([]);
@@ -79,9 +80,10 @@ const AddStockImageForm = () => {
       setDesigns(designsRes.data || designsRes || []);
       setPurities(puritiesRes.data || puritiesRes || []);
       setBoxes(boxesRes.data || boxesRes || []);
+      
     } catch (error) {
       console.error("Error loading master data:", error);
-      error("Failed to load master data");
+      error("Failed to load master data. Please refresh the page.");
     }
   };
 
@@ -162,39 +164,88 @@ const AddStockImageForm = () => {
     setLoading(true);
     
     try {
-      // Create FormData for multipart upload
-      const submitData = new FormData();
+      // Create new FormData instance for multipart upload
+      const formDataInstance = new FormData();
       
-      // Add all product fields (excluding images-related fields from formData)
-      Object.keys(formData).forEach(key => {
-        if (formData[key] && key !== 'images' && key !== 'Images') {
-          submitData.append(key, formData[key]);
+      // Add all product fields with proper validation
+      const productFields = {
+        itemCode: formData.itemCode,
+        categoryName: formData.categoryName,
+        branchName: formData.branchName,
+        counterName: formData.counterName,
+        productName: formData.productName,
+        designName: formData.designName,
+        purityName: formData.purityName,
+        rfidCode: formData.rfidCode,
+        grossWeight: formData.grossWeight,
+        netWeight: formData.netWeight,
+        stoneWeight: formData.stoneWeight || '',
+        diamondHeight: formData.diamondHeight || '',
+        boxDetails: formData.boxDetails || '',
+        size: formData.size || '',
+        stoneAmount: formData.stoneAmount || '',
+        diamondAmount: formData.diamondAmount || '',
+        hallmarkAmount: formData.hallmarkAmount || '',
+        makingPerGram: formData.makingPerGram,
+        makingPercentage: formData.makingPercentage || '',
+        makingFixedAmount: formData.makingFixedAmount || '',
+        mrp: formData.mrp || '',
+        status: formData.status || 'Active'
+      };
+
+      // Append all product fields to FormData
+      Object.entries(productFields).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          formDataInstance.append(key, value.toString());
         }
       });
       
-      // Add image files and metadata
+      // Add image files and their metadata
       images.forEach((image, index) => {
-        // Add the actual file with proper naming
-        submitData.append(`Images[${index}].File`, image.file, image.file.name);
-        // Add metadata for each image
-        submitData.append(`Images[${index}].ImageType`, index === 0 ? 'Primary' : 'Secondary');
-        submitData.append(`Images[${index}].DisplayOrder`, (index + 1).toString());
+        // Add the actual file - use 'images' as the key for files
+        formDataInstance.append('images', image.file, image.file.name);
+        
+        // Add metadata for each image with proper indexing
+        formDataInstance.append(`Images[${index}].ImageType`, index === 0 ? 'Primary' : 'Secondary');
+        formDataInstance.append(`Images[${index}].DisplayOrder`, (index + 1).toString());
       });
 
       // Debug: Log FormData contents
-      console.log('=== FormData contents ===');
-      console.log('Total images:', images.length);
-      for (let pair of submitData.entries()) {
-        if (pair[1] instanceof File) {
-          console.log(pair[0] + ':', pair[1].name, `(${pair[1].size} bytes, ${pair[1].type})`);
+      console.log('=== FormData Debug Information ===');
+      console.log('Total images to upload:', images.length);
+      console.log('Product data fields:', Object.keys(productFields).length);
+      console.log('FormData instance created:', formDataInstance instanceof FormData);
+      
+      // Validate FormData structure
+      let fileCount = 0;
+      let metadataCount = 0;
+      
+      // Log FormData entries for debugging
+      console.log('FormData entries:');
+      for (let [key, value] of formDataInstance.entries()) {
+        if (value instanceof File) {
+          fileCount++;
+          console.log(`${key}:`, `File(${value.name}, ${value.size} bytes, ${value.type})`);
         } else {
-          console.log(pair[0] + ':', pair[1]);
+          if (key.includes('Images[') && (key.includes('ImageType') || key.includes('DisplayOrder'))) {
+            metadataCount++;
+          }
+          console.log(`${key}:`, value);
         }
       }
+      
+      console.log(`Validation: ${fileCount} files, ${metadataCount} image metadata entries`);
+      
+      // Additional validation
+      if (fileCount !== images.length) {
+        throw new Error(`File count mismatch: expected ${images.length}, found ${fileCount}`);
+      }
 
-      const response = await apiService.createProductWithImages(submitData);
+      const response = await apiService.createProductWithImages(formDataInstance);
       console.log('API Response:', response);
-      success('Product with images created successfully!');
+      
+      // Success toast
+      success('Product saved successfully!');
       
       // Reset form
       setFormData({
@@ -222,9 +273,21 @@ const AddStockImageForm = () => {
         status: 'Active',
       });
       setImages([]);
+      
     } catch (err) {
       console.error('Error creating product with images:', err);
-      error(err.response?.data?.message || 'Failed to create product with images');
+      
+      // Error toast
+      let errorMessage = 'Failed to save product';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      error(errorMessage);
+      
     } finally {
       setLoading(false);
     }
@@ -622,6 +685,9 @@ const AddStockImageForm = () => {
           </div>
         </div>
       </Card>
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };
