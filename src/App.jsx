@@ -15,10 +15,22 @@ import PurchaseEntryPage from './pages/PurchaseEntryPage';
 import AddStockPage from './pages/AddStockPage';
 import InvoicePage from './pages/InvoicePage';
 
-// Reports Pages
-import StockReportsPage from './pages/reports/StockReportsPage';
-import SalesReportsPage from './pages/reports/SalesReportsPage';
-import PurchaseReportsPage from './pages/reports/PurchaseReportsPage';
+// Reports Pages - API Integrated
+import StockMovementReportsPage from './pages/reports/StockMovementReportsPage';
+import RFIDUsageReportsPage from './pages/reports/RFIDUsageReportsPage';
+import DailyBalanceReportsPage from './pages/reports/DailyBalanceReportsPage';
+import StockVerificationReportsPage from './pages/reports/StockVerificationReportsPage';
+import DailyActivityReportsPage from './pages/reports/DailyActivityReportsPage';
+import StockSummaryReportsPage from './pages/reports/StockSummaryReportsPage';
+import StockTransferReportsPage from './pages/reports/StockTransferReportsPage';
+
+// Invoice Pages
+import InvoiceManagementPage from './pages/invoices/InvoiceManagementPage';
+import InvoiceListPage from './pages/invoices/InvoiceListPage';
+import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
+import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
+import InvoiceAnalyticsPage from './pages/invoices/InvoiceAnalyticsPage';
+import InvoiceReportsPage from './pages/invoices/InvoiceReportsPage';
 
 // Member Pages
 import AdminPage from './pages/member/AdminPage';
@@ -140,10 +152,59 @@ function App() {
               </ProtectedRoute>
             } />
             
+            {/* Invoice Routes */}
             <Route path="/invoices" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <InvoicePage />
+                  <InvoiceManagementPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices/list" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <InvoiceListPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices/create" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CreateInvoicePage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices/details/:id" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <InvoiceDetailsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices/edit/:id" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CreateInvoicePage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices/analytics" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <InvoiceAnalyticsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/invoices/reports" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <InvoiceReportsPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -239,27 +300,59 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Reports Routes */}
-            <Route path="/reports/stock" element={
+            {/* Reports Routes - API Integrated */}
+            <Route path="/reports/stock-movement" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <StockReportsPage />
+                  <StockMovementReportsPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            <Route path="/reports/sales" element={
+            <Route path="/reports/rfid-usage" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <SalesReportsPage />
+                  <RFIDUsageReportsPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            <Route path="/reports/purchase" element={
+            <Route path="/reports/daily-balance" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <PurchaseReportsPage />
+                  <DailyBalanceReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports/stock-verification" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <StockVerificationReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports/daily-activity" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <DailyActivityReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports/stock-summary" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <StockSummaryReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/reports/stock-transfer" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <StockTransferReportsPage />
                 </MainLayout>
               </ProtectedRoute>
             } />

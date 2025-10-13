@@ -27,7 +27,9 @@ import {
   Calculator,
   Box,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Plus,
+  Download
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import useAuth from '../../hooks/useAuth';
@@ -98,17 +100,26 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     {
       name: 'Invoices',
-      path: '/invoices',
       icon: Receipt,
+      submenu: [
+        { name: 'Invoice Management', path: '/invoices', icon: Receipt },
+        { name: 'All Invoices', path: '/invoices/list', icon: FileText },
+        { name: 'Create Invoice', path: '/invoices/create', icon: Plus },
+        { name: 'Invoice Analytics', path: '/invoices/analytics', icon: BarChart3 },
+        { name: 'Invoice Reports', path: '/invoices/reports', icon: Download },
+      ],
     },
     {
       name: 'Reports',
       icon: BarChart3,
       submenu: [
-        { name: 'Stock Reports', path: '/reports/stock' },
-        { name: 'Sales Reports', path: '/reports/sales' },
-        { name: 'Purchase Reports', path: '/reports/purchase' },
-        { name: 'Financial Reports', path: '/reports/financial' },
+        { name: 'Stock Movement', path: '/reports/stock-movement' },
+        { name: 'RFID Usage', path: '/reports/rfid-usage' },
+        { name: 'Daily Balance', path: '/reports/daily-balance' },
+        { name: 'Stock Verification', path: '/reports/stock-verification' },
+        { name: 'Daily Activity', path: '/reports/daily-activity' },
+        { name: 'Stock Summary', path: '/reports/stock-summary' },
+        { name: 'Stock Transfer', path: '/reports/stock-transfer' },
       ],
     },
     {
@@ -280,7 +291,7 @@ onMouseLeave={handleMouseLeave}
 
                     {/* Hover tooltip for collapsed state */}
                     {isCollapsed && hoveredMenu === item.name && (
-                      <div className="absolute left-full top-0 ml-2 z-50">
+                      <div className="absolute left-full top-0 ml-2 z-40">
                         <div className="bg-gray-900 dark:bg-gray-700 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
                           {item.name}
                         </div>
@@ -327,7 +338,7 @@ onMouseLeave={handleMouseLeave}
                     {/* Collapsed submenu hover tooltip */}
                     {isCollapsed && hoveredMenu === item.name && (
                       <div 
-                        className="absolute left-full top-0 ml-2 z-[99999]"
+                        className="absolute left-full top-0 ml-2 z-40"
 onMouseEnter={() => handleMouseEnter(item.name)}
 onMouseLeave={handleMouseLeave}
                       >
@@ -378,7 +389,7 @@ onMouseLeave={handleMouseLeave}
                     {/* Hover tooltip for collapsed state */}
                     {isCollapsed && hoveredMenu === item.name && (
                       <div 
-                        className="absolute left-full top-0 ml-2 z-[99999]"
+                        className="absolute left-full top-0 ml-2 z-40"
 onMouseEnter={() => handleMouseEnter(item.name)}
 onMouseLeave={handleMouseLeave}
                       >
@@ -422,7 +433,7 @@ onMouseLeave={handleMouseLeave}
             {/* Hover tooltip for collapsed state */}
             {isCollapsed && hoveredMenu === 'logout' && (
               <div 
-                className="absolute left-full top-0 ml-2 z-[99999]"
+                className="absolute left-full top-0 ml-2 z-40"
                 onMouseEnter={() => handleMouseEnter('logout')}
                 onMouseLeave={handleMouseLeave}
               >
