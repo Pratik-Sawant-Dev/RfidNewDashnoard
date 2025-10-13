@@ -466,6 +466,11 @@ class ApiService {
       throw error;
     }
   }
+
+  // Bulk create products
+  async bulkCreateProducts(productsData) {
+    return this.post('/api/Product/bulk-create', productsData);
+  }
 }
 
 // Create and export a singleton instance
