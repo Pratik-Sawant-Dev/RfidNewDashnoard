@@ -471,6 +471,11 @@ class ApiService {
   async bulkCreateProducts(productsData) {
     return this.post('/api/Product/bulk-create', productsData);
   }
+
+  // Get all products for inventory
+  async getAllProducts(params = {}) {
+    return this.get('/api/Product/all', params);
+  }
 }
 
 // Create and export a singleton instance

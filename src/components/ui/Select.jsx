@@ -99,7 +99,9 @@ const Select = forwardRef(({
   };
 
   const handleSelect = (option) => {
-    onChange(option.value);
+    if (onChange) {
+      onChange(option.value);
+    }
     setIsOpen(false);
     setSearchTerm('');
     setHighlightedIndex(-1);
@@ -113,7 +115,9 @@ const Select = forwardRef(({
 
   const handleClear = (e) => {
     e.stopPropagation();
-    onChange('');
+    if (onChange) {
+      onChange('');
+    }
     setSearchTerm('');
     setHighlightedIndex(-1);
     if (inputRef.current) {
