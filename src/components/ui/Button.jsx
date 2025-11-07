@@ -37,7 +37,7 @@ const Button = ({
         baseClasses,
         variants[variant],
         sizes[size],
-        'flex items-center justify-center', // Ensure horizontal layout
+        'flex items-center justify-center min-w-[160px]', // Ensure horizontal layout and consistent width
         className
       )}
       disabled={disabled}

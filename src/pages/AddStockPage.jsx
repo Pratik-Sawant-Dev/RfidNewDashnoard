@@ -12,6 +12,8 @@ import {
   Upload,
   Search,
   X,
+  Plus,
+  Settings,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -32,6 +34,7 @@ const AddStockPage = () => {
   const [allowRfidUpdate, setAllowRfidUpdate] = useState(false);
   const [activeTab, setActiveTab] = useState("add-stock");
   const [searchQuery, setSearchQuery] = useState("");
+  const [customFields, setCustomFields] = useState([]);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -173,11 +176,38 @@ const AddStockPage = () => {
     });
     setEditingItem(null);
     setAllowRfidUpdate(false);
+    setCustomFields([]);
+  };
+
+  // Custom Fields Functions
+  const addCustomField = () => {
+    setCustomFields([...customFields, { key: "", value: "", id: Date.now() }]);
+  };
+
+  const removeCustomField = (id) => {
+    setCustomFields(customFields.filter((field) => field.id !== id));
+  };
+
+  const updateCustomField = (id, field, value) => {
+    setCustomFields(
+      customFields.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
   };
 
   const handleAddItem = async (data) => {
     try {
       setLoading(true);
+      
+      // Convert custom fields array to object format
+      const customFieldsObj = {};
+      customFields.forEach((field) => {
+        if (field.key && field.value) {
+          customFieldsObj[field.key] = field.value;
+        }
+      });
+
       const productData = {
         itemCode: data.itemCode,
         categoryName: data.categoryName,
@@ -201,17 +231,17 @@ const AddStockPage = () => {
         makingFixedAmount: parseFloat(data.makingFixedAmount) || 0,
         mrp: parseFloat(data.mrp) || 0,
         status: data.status || "Active",
+        customFields: Object.keys(customFieldsObj).length > 0 ? customFieldsObj : undefined,
       };
 
-      const result = await apiService.createProduct(productData);
-      if (result) {
-        success("Product added successfully");
-        resetForm();
-        await loadProducts();
-        setShowList(true);
-      } else {
-        error(result.message);
-      }
+             const result = await apiService.createProduct(productData);
+       if (result) {
+         success("Product added successfully");
+         resetForm();
+         await loadProducts();
+       } else {
+         error(result.message);
+       }
     } catch (err) {
       console.error("Error adding product:", err);
       error(err.response?.data?.message || "Failed to add product");
@@ -231,14 +261,25 @@ const AddStockPage = () => {
       
       // Use setValue to populate form fields with fresh data
       Object.keys(productData).forEach((key) => {
-        if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
+        if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'customFields') {
           setValue(key, productData[key] || "");
         }
       });
+
+      // Load custom fields if they exist
+      if (productData.customFields && typeof productData.customFields === 'object') {
+        const fieldsArray = Object.entries(productData.customFields).map(([key, value]) => ({
+          id: Date.now() + Math.random(),
+          key: key,
+          value: String(value),
+        }));
+        setCustomFields(fieldsArray);
+      } else {
+        setCustomFields([]);
+      }
       
-      // Switch to form view and scroll to top
-      setShowList(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+             // Switch to form view and scroll to top
+       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Error fetching product details:", err);
       error("Failed to load product details");
@@ -246,22 +287,43 @@ const AddStockPage = () => {
       // Fallback to using item data if API call fails
       setEditingItem(item);
       Object.keys(item).forEach((key) => {
-        if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
+        if (key !== 'id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'customFields') {
           setValue(key, item[key] || "");
         }
       });
-      setShowList(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      // Load custom fields from item if available
+      if (item.customFields && typeof item.customFields === 'object') {
+        const fieldsArray = Object.entries(item.customFields).map(([key, value]) => ({
+          id: Date.now() + Math.random(),
+          key: key,
+          value: String(value),
+        }));
+        setCustomFields(fieldsArray);
+      } else {
+        setCustomFields([]);
+      }
+
+             window.scrollTo({ top: 0, behavior: "smooth" });
+     } finally {
+       setLoading(false);
+     }
+   };
 
   const handleUpdateItem = async (data) => {
     if (!editingItem) return;
     
     try {
       setLoading(true);
+
+      // Convert custom fields array to object format
+      const customFieldsObj = {};
+      customFields.forEach((field) => {
+        if (field.key && field.value) {
+          customFieldsObj[field.key] = field.value;
+        }
+      });
+
       const productData = {
         itemCode: data.itemCode,
         categoryName: data.categoryName,
@@ -284,6 +346,7 @@ const AddStockPage = () => {
         makingFixedAmount: parseFloat(data.makingFixedAmount) || 0,
         mrp: parseFloat(data.mrp) || 0,
         status: data.status || "Active",
+        customFields: Object.keys(customFieldsObj).length > 0 ? customFieldsObj : undefined,
       };
 
       // Only include RFID code in update if toggle is enabled
@@ -291,11 +354,10 @@ const AddStockPage = () => {
         productData.rfidCode = data.rfidCode;
       }
 
-      await apiService.updateProduct(editingItem.id, productData);
-      success("Product updated successfully");
-      resetForm();
-      await loadProducts();
-      setShowList(true);
+             await apiService.updateProduct(editingItem.id, productData);
+       success("Product updated successfully");
+       resetForm();
+       await loadProducts();
     } catch (err) {
       console.error("Error updating product:", err);
       error(err.response?.data?.message || "Failed to update product");
@@ -361,11 +423,11 @@ const AddStockPage = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="mb-4">
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
           Stock Management
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
           Manage your jewelry inventory with RFID tracking
         </p>
       </div>
@@ -374,11 +436,10 @@ const AddStockPage = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-1 p-1" aria-label="Tabs">
-            <button
-              onClick={() => {
-                setActiveTab("add-stock");
-                setShowList(false);
-              }}
+                         <button
+               onClick={() => {
+                 setActiveTab("add-stock");
+               }}
               className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 activeTab === "add-stock"
                   ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
@@ -388,11 +449,10 @@ const AddStockPage = () => {
               <Package className="w-4 h-4" />
               <span>Add Stock</span>
             </button>
-            <button
-              onClick={() => {
-                setActiveTab("add-image");
-                setShowList(false);
-              }}
+                         <button
+               onClick={() => {
+                 setActiveTab("add-image");
+               }}
               className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 activeTab === "add-image"
                   ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
@@ -402,11 +462,10 @@ const AddStockPage = () => {
               <Image className="w-4 h-4" />
               <span>Add Stock Image</span>
             </button>
-            <button
-              onClick={() => {
-                setActiveTab("bulk-add");
-                setShowList(false);
-              }}
+                         <button
+               onClick={() => {
+                 setActiveTab("bulk-add");
+               }}
               className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
                 activeTab === "bulk-add"
                   ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
@@ -420,19 +479,18 @@ const AddStockPage = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === "add-stock" && (
-        <Card>
-        {!showList ? (
-          loading && editingItem ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-500 dark:text-gray-400">
-                Loading product details...
-              </p>
-            </div>
-          ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+             {/* Tab Content */}
+       {activeTab === "add-stock" && (
+         <Card>
+           {loading && editingItem ? (
+             <div className="text-center py-12">
+               <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
+               <p className="text-gray-500 dark:text-gray-400">
+                 Loading product details...
+               </p>
+             </div>
+           ) : (
+           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Section 1: Item Code & RFID Code */}
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -804,232 +862,104 @@ const AddStockPage = () => {
               </div>
             </div>
 
-            {/* Form Actions */}
-            <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                onClick={() => setShowList(true)}
-                className="flex items-center space-x-2"
-              >
-                <List className="w-4 h-4" />
-                <span>List</span>
-              </Button>
-              <div className="flex space-x-2">
-                {editingItem && (
-                  <Button variant="outline" size="sm" type="button" onClick={resetForm}>
-                    Cancel
-                  </Button>
-                )}
-                <Button
-                  variant="accent"
-                  size="sm"
-                  type="submit"
-                  disabled={!isValid || loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {editingItem ? "Updating..." : "Adding..."}
-                    </>
-                  ) : (
-                    <>{editingItem ? "Update" : "Add Stock"}</>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </form>
-          )
-        ) : (
-          /* Stock Items List - In Place */
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-              <div className="flex items-center space-x-3">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Inventory Items
+            {/* Section 3: Custom Fields */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Custom Fields
                 </h3>
-                <Package className="w-5 h-5 text-blue-600" />
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {stockItems.length} total
-                  {filteredItems.length !== stockItems.length && 
-                    ` (${filteredItems.length} filtered)`
-                  }
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                {/* Global Search */}
-                <div className="relative flex-1 sm:flex-initial">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search items..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="w-full sm:w-64 pl-10 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        setCurrentPage(1);
-                      }}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowList(false)}
-                  className="flex items-center space-x-2 whitespace-nowrap"
+                  onClick={addCustomField}
+                  className="flex items-center space-x-1.5 h-8 px-3 text-xs"
                 >
-                  <List className="w-4 h-4" />
-                  <span>Back to Form</span>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Field</span>
                 </Button>
               </div>
+
+              {customFields.length === 0 ? (
+                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center">
+                  <Settings className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    No custom fields added. Click "Add Field" to create custom fields for this product.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {customFields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <input
+                          type="text"
+                          value={field.key}
+                          onChange={(e) =>
+                            updateCustomField(field.id, "key", e.target.value)
+                          }
+                          placeholder="Field Name (e.g., Ring Size)"
+                          className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <input
+                          type="text"
+                          value={field.value}
+                          onChange={(e) =>
+                            updateCustomField(field.id, "value", e.target.value)
+                          }
+                          placeholder="Field Value"
+                          className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomField(field.id)}
+                        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors border border-red-200 dark:border-red-800"
+                        title="Remove field"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {loading ? (
-              <div className="text-center py-8">
-                <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  Loading products...
-                </p>
-              </div>
-            ) : stockItems.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  No items added yet. Click "Back to Form" to add your first
-                  item.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        Item Code
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        Product Name
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        Category
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        Branch
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        MRP
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        RFID Code
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        Status
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-900 dark:text-white">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedItems.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      >
-                        <td className="py-2 px-3 text-gray-600 dark:text-gray-300">
-                          {item.itemCode}
-                        </td>
-                        <td className="py-2 px-3">
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {item.productName}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-300">
-                              {item.designName} - {item.purityName}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-2 px-3 text-gray-600 dark:text-gray-300">
-                          {item.categoryName}
-                        </td>
-                        <td className="py-2 px-3 text-gray-600 dark:text-gray-300">
-                          {item.branchName}
-                        </td>
-                        <td className="py-2 px-3 text-gray-600 dark:text-gray-300">
-                          ₹{item.mrp?.toLocaleString() || "0"}
-                        </td>
-                        <td className="py-2 px-3">
-                          <div className="flex items-center space-x-2">
-                            <Tag className="w-3 h-3 text-green-600" />
-                            <span className="text-xs font-mono text-gray-600 dark:text-gray-300">
-                              {item.rfidCode}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-2 px-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            {item.status || "Active"}
-                          </span>
-                        </td>
-                        <td className="py-2 px-3">
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditItem(item)}
-                              disabled={loading}
-                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteItem(item.id)}
-                              disabled={loading}
-                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            
-            {/* Pagination */}
-            {!loading && stockItems.length > 0 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={filteredItems.length}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
-                onItemsPerPageChange={handleItemsPerPageChange}
-                rowsPerPageOptions={[25, 50, 100]}
-              />
-            )}
-          </div>
-        )}
-      </Card>
-      )}
+                         {/* Form Actions */}
+             <div className="flex justify-end items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+               <div className="flex space-x-2">
+                 {editingItem && (
+                   <Button variant="outline" size="sm" type="button" onClick={resetForm}>
+                     Cancel
+                   </Button>
+                 )}
+                 <Button
+                   variant="accent"
+                   size="sm"
+                   type="submit"
+                   disabled={!isValid || loading}
+                 >
+                   {loading ? (
+                     <>
+                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                       {editingItem ? "Updating..." : "Adding..."}
+                     </>
+                   ) : (
+                     <>{editingItem ? "Update" : "Add Stock"}</>
+                   )}
+                 </Button>
+               </div>
+             </div>
+           </form>
+           )}
+         </Card>
+       )}
 
       {/* Add Stock Image Tab */}
       {activeTab === "add-image" && <AddStockImageForm />}

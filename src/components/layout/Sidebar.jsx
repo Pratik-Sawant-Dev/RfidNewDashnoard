@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
-  ShoppingCart, 
   Package, 
   FileText, 
   BarChart3, 
@@ -12,7 +11,6 @@ import {
   Gem,
   Users,
   CreditCard,
-  TrendingUp,
   Package2,
   Receipt,
   UserCheck,
@@ -29,7 +27,11 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Plus,
-  Download
+  Download,
+  Radio,
+  QrCode,
+  List,
+  Grid3x3
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import useAuth from '../../hooks/useAuth';
@@ -40,10 +42,10 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { isAdmin, user, logout } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({
     reports: false,
-    inventory: false,
-    sales: false,
+    inventory: true,
     member: false,
     master: false,
+    rfidhub: false,
   });
   
   // Sidebar collapse state for large screens
@@ -56,76 +58,78 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: 'Dashboard',
       path: '/dashboard',
       icon: Home,
+      iconColor: 'text-blue-600 dark:text-blue-400',
     },
     {
-      name: 'Master',
+      name: 'Master Data',
       icon: Database,
+      iconColor: 'text-purple-600 dark:text-purple-400',
       submenu: [
-        { name: 'Category', path: '/master/category', icon: Tag },
-        { name: 'Product', path: '/master/product', icon: Package },
-        { name: 'Design', path: '/master/design', icon: Palette },
-        { name: 'Purity', path: '/master/purity', icon: Award },
-        { name: 'Branch', path: '/master/branch', icon: Building },
-        { name: 'Counter', path: '/master/counter', icon: Calculator },
-        { name: 'Box', path: '/master/box', icon: Box },
+        { name: 'Categories', path: '/master/category', icon: Tag, iconColor: 'text-indigo-600 dark:text-indigo-400' },
+        { name: 'Products', path: '/master/product', icon: Package, iconColor: 'text-blue-600 dark:text-blue-400' },
+        { name: 'Designs', path: '/master/design', icon: Palette, iconColor: 'text-pink-600 dark:text-pink-400' },
+        { name: 'Purity Levels', path: '/master/purity', icon: Award, iconColor: 'text-yellow-600 dark:text-yellow-400' },
+        { name: 'Branches', path: '/master/branch', icon: Building, iconColor: 'text-green-600 dark:text-green-400' },
+        { name: 'Counters', path: '/master/counter', icon: Calculator, iconColor: 'text-teal-600 dark:text-teal-400' },
+        { name: 'Boxes', path: '/master/box', icon: Box, iconColor: 'text-orange-600 dark:text-orange-400' },
       ],
     },
     {
-      name: 'Purchase Entry',
-      path: '/purchase-entry',
-      icon: ShoppingCart,
-    },
-    {
-      name: 'Add Stock',
+      name: 'Stock Entry',
       path: '/add-stock',
       icon: Package,
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
     },
     {
       name: 'Inventory',
       icon: Package2,
+      iconColor: 'text-cyan-600 dark:text-cyan-400',
       submenu: [
-        { name: 'Stock Management', path: '/inventory/stock' },
-        { name: 'Product Catalog', path: '/inventory/catalog' },
-        { name: 'RFID Tags', path: '/inventory/rfid-tags' },
+        { name: 'View Products', path: '/inventory/product-list', icon: List, iconColor: 'text-blue-600 dark:text-blue-400' },
+        { name: 'Product Catalog', path: '/inventory/product-catalog', icon: Grid3x3, iconColor: 'text-purple-600 dark:text-purple-400' },
       ],
     },
     {
-      name: 'Sales',
-      icon: TrendingUp,
+      name: 'RFID Hub',
+      icon: Radio,
+      iconColor: 'text-rose-600 dark:text-rose-400',
       submenu: [
-        { name: 'Point of Sale', path: '/sales/pos' },
-        { name: 'Sales History', path: '/sales/history' },
-        { name: 'Customer Management', path: '/sales/customers' },
+        { name: 'Register Tag', path: '/rfid-hub/add-rfid', icon: Plus, iconColor: 'text-green-600 dark:text-green-400' },
+        { name: 'All Tags', path: '/rfid-hub/all-tags', icon: QrCode, iconColor: 'text-blue-600 dark:text-blue-400' },
+        { name: 'Available Tags', path: '/rfid-hub/unused-tags', icon: Tag, iconColor: 'text-orange-600 dark:text-orange-400' },
       ],
     },
     {
       name: 'Invoices',
       icon: Receipt,
+      iconColor: 'text-amber-600 dark:text-amber-400',
       submenu: [
-        { name: 'Invoice Management', path: '/invoices', icon: Receipt },
-        { name: 'All Invoices', path: '/invoices/list', icon: FileText },
-        { name: 'Create Invoice', path: '/invoices/create', icon: Plus },
-        { name: 'Invoice Analytics', path: '/invoices/analytics', icon: BarChart3 },
-        { name: 'Invoice Reports', path: '/invoices/reports', icon: Download },
+        { name: 'Manage', path: '/invoices', icon: Receipt, iconColor: 'text-amber-600 dark:text-amber-400' },
+        { name: 'View All', path: '/invoices/list', icon: FileText, iconColor: 'text-blue-600 dark:text-blue-400' },
+        { name: 'Create New', path: '/invoices/create', icon: Plus, iconColor: 'text-green-600 dark:text-green-400' },
+        { name: 'Analytics', path: '/invoices/analytics', icon: BarChart3, iconColor: 'text-purple-600 dark:text-purple-400' },
+        { name: 'Reports', path: '/invoices/reports', icon: Download, iconColor: 'text-indigo-600 dark:text-indigo-400' },
       ],
     },
     {
       name: 'Reports',
       icon: BarChart3,
+      iconColor: 'text-violet-600 dark:text-violet-400',
       submenu: [
-        { name: 'Stock Movement', path: '/reports/stock-movement' },
-        { name: 'RFID Usage', path: '/reports/rfid-usage' },
+        { name: 'Stock Flow', path: '/reports/stock-movement' },
+        { name: 'RFID Stats', path: '/reports/rfid-usage' },
         { name: 'Daily Balance', path: '/reports/daily-balance' },
-        { name: 'Stock Verification', path: '/reports/stock-verification' },
-        { name: 'Daily Activity', path: '/reports/daily-activity' },
+        { name: 'Stock Check', path: '/reports/stock-verification' },
+        { name: 'Activity Log', path: '/reports/daily-activity' },
         { name: 'Stock Summary', path: '/reports/stock-summary' },
-        { name: 'Stock Transfer', path: '/reports/stock-transfer' },
+        { name: 'Transfers', path: '/reports/stock-transfer' },
       ],
     },
     {
       name: 'Settings',
       path: '/settings',
       icon: Settings,
+      iconColor: 'text-gray-600 dark:text-gray-400',
     },
   ];
 
@@ -228,33 +232,32 @@ const Sidebar = ({ isOpen, onClose }) => {
         isCollapsed ? 'w-16' : 'w-64'
       )}>
         {/* Logo and Toggle */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="flex items-center space-x-2">
-            <Gem className="w-8 h-8 text-primary-500" />
-            {!isCollapsed && (
-              <span className="text-xl font-bold text-gradient font-elegant">
-                JewelRFID
-              </span>
-            )}
+        <div className="flex items-center justify-between h-20 px-6 border-b-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/images/Sparkle ERP Logo.svg" 
+              alt="Sparkle ERP Logo" 
+              className={isCollapsed ? "w-10 h-10" : "h-10 w-auto"}
+            />
           </div>
           
           {/* Toggle button - only visible on large screens */}
           <button
             onClick={toggleCollapse}
-            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 hover:scale-110"
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? (
-              <ChevronRightIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronRightIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             ) : (
-              <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             )}
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-3 flex-1">
-          <ul className="space-y-1">
+        <nav className="mt-8 px-4 flex-1">
+          <ul className="space-y-2">
             {filteredMenuItems.map((item) => (
               <li key={item.name}>
                 {item.submenu && item.submenu.length > 0 ? (
@@ -264,7 +267,7 @@ onMouseEnter={() => handleMouseEnter(item.name)}
 onMouseLeave={handleMouseLeave}
                   >
                     <button
-                      onClick={() => toggleSubmenu(item.name.toLowerCase().replace(' ', ''))}
+                      onClick={() => toggleSubmenu(item.name.toLowerCase().replace(/\s+/g, ''))}
                       className={clsx(
                         'sidebar-item w-full text-left group relative',
                         isSubmenuActive(item.submenu) ? 'sidebar-item-active' : 'sidebar-item-inactive',
@@ -272,17 +275,19 @@ onMouseLeave={handleMouseLeave}
                       )}
                     >
                       <item.icon className={clsx(
-                        'transition-transform duration-200 group-hover:scale-110',
-                        isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3'
+                        'transition-transform duration-200 group-hover:scale-110 flex-shrink-0',
+                        isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3',
+                        // Always use the icon color, never gray
+                        item.iconColor || 'text-primary-600 dark:text-primary-400'
                       )} />
                       {!isCollapsed && (
                         <>
-                          <span className="flex-1">{item.name}</span>
+                          <span className="flex-1 font-semibold text-base">{item.name}</span>
                           <div className="transition-transform duration-200 ease-in-out">
-                            {expandedMenus[item.name.toLowerCase().replace(' ', '')] ? (
-                              <ChevronDown className="w-4 h-4 rotate-180" />
+                            {expandedMenus[item.name.toLowerCase().replace(/\s+/g, '')] ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                             ) : (
-                              <ChevronRight className="w-4 h-4" />
+                              <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                             )}
                           </div>
                         </>
@@ -304,12 +309,12 @@ onMouseLeave={handleMouseLeave}
                     
                     <div className={clsx(
                       'overflow-hidden transition-all duration-300 ease-in-out',
-                      expandedMenus[item.name.toLowerCase().replace(' ', '')] 
+                      expandedMenus[item.name.toLowerCase().replace(/\s+/g, '')] 
                         ? 'max-h-96 opacity-100' 
                         : 'max-h-0 opacity-0',
                       isCollapsed && 'hidden'
                     )}>
-                      <ul className="mt-1 ml-8 space-y-1 pb-2">
+                      <ul className="mt-2 ml-6 space-y-1.5 pb-2">
                         {item.submenu.map((subItem) => (
                           <li key={subItem.name}>
                             <Link
@@ -321,9 +326,13 @@ onMouseLeave={handleMouseLeave}
                               )}
                             >
                               {subItem.icon && (
-                                <subItem.icon className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                                <subItem.icon className={clsx(
+                                  'w-4 h-4 mr-3 transition-transform duration-200 group-hover:scale-110 flex-shrink-0',
+                                  // Always use the icon color, never gray
+                                  subItem.iconColor || item.iconColor || 'text-primary-600 dark:text-primary-400'
+                                )} />
                               )}
-                              <span className="flex-1">{subItem.name}</span>
+                              <span className="flex-1 text-sm font-medium">{subItem.name}</span>
                               {subItem.description && (
                                 <span className="text-xs text-gray-400 dark:text-gray-500 hidden group-hover:block transition-opacity duration-200">
                                   {subItem.description}
@@ -351,7 +360,10 @@ onMouseLeave={handleMouseLeave}
                               className="block px-4 py-3 hover:bg-gray-800 dark:hover:bg-gray-600 flex items-center space-x-3 transition-colors duration-200 min-w-[180px]"
                             >
                               {subItem.icon && (
-                                <subItem.icon className="w-4 h-4 flex-shrink-0" />
+                                <subItem.icon className={clsx(
+                                  'w-4 h-4 flex-shrink-0',
+                                  subItem.iconColor || item.iconColor || 'text-white'
+                                )} />
                               )}
                               <span className="whitespace-nowrap">{subItem.name}</span>
                             </Link>
@@ -374,16 +386,18 @@ onMouseLeave={handleMouseLeave}
                       to={item.path}
                       onClick={handleLinkClick}
                       className={clsx(
-                        'sidebar-item group transition-all duration-200 hover:translate-x-1',
+                        'sidebar-item group transition-all duration-300',
                         isActive(item.path) ? 'sidebar-item-active' : 'sidebar-item-inactive',
                         isCollapsed && 'justify-center px-3'
                       )}
                     >
                       <item.icon className={clsx(
-                        'transition-transform duration-200 group-hover:scale-110',
-                        isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3'
+                        'transition-transform duration-200 group-hover:scale-110 flex-shrink-0',
+                        isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3',
+                        // Always use the icon color, never gray
+                        item.iconColor || 'text-primary-600 dark:text-primary-400'
                       )} />
-                      {!isCollapsed && <span>{item.name}</span>}
+                      {!isCollapsed && <span className="font-semibold text-base">{item.name}</span>}
                     </Link>
 
                     {/* Hover tooltip for collapsed state */}
@@ -410,7 +424,7 @@ onMouseLeave={handleMouseLeave}
         </nav>
 
         {/* Logout Section */}
-        <div className="mt-auto p-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
           <div 
             className="relative"
             onMouseEnter={() => handleMouseEnter('logout')}
@@ -419,15 +433,15 @@ onMouseLeave={handleMouseLeave}
             <button
               onClick={handleLogout}
               className={clsx(
-                'w-full flex items-center px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 group',
+                'w-full flex items-center px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-300 group font-medium',
                 isCollapsed && 'justify-center'
               )}
             >
               <LogOut className={clsx(
-                'group-hover:scale-110 transition-transform duration-200',
+                'group-hover:scale-110 transition-transform duration-200 flex-shrink-0',
                 isCollapsed ? 'w-5 h-5' : 'w-5 h-5 mr-3'
               )} />
-              {!isCollapsed && <span className="text-sm font-medium">Sign Out</span>}
+              {!isCollapsed && <span className="text-sm font-semibold text-black dark:text-white">Sign Out</span>}
             </button>
 
             {/* Hover tooltip for collapsed state */}

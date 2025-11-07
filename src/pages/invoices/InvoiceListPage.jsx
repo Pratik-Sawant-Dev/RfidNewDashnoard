@@ -175,28 +175,29 @@ const InvoiceListPage = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Invoice List
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            View and manage all invoices
-          </p>
-        </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        {/* Label - Left Side */}
+        <label className="flex-shrink-0 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+          Invoice List
+        </label>
+        
+        {/* Refresh and New Invoice - Right Side */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Refresh Button */}
           <Button
             onClick={fetchInvoices}
             variant="outline"
-            className="flex items-center space-x-2"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto"
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
+          
+          {/* New Invoice Button */}
           <Link to="/invoices/create">
-            <Button className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
+            <Button className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto">
+              <Plus className="w-3.5 h-3.5" />
               <span>New Invoice</span>
             </Button>
           </Link>

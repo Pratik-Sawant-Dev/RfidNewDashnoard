@@ -167,7 +167,7 @@ const AddStockImageForm = () => {
       // Create new FormData instance for multipart upload
       const formDataInstance = new FormData();
       
-      // Add all product fields with proper validation
+      // Prepare product data object with proper validation
       const productFields = {
         itemCode: formData.itemCode,
         categoryName: formData.categoryName,
@@ -177,48 +177,47 @@ const AddStockImageForm = () => {
         designName: formData.designName,
         purityName: formData.purityName,
         rfidCode: formData.rfidCode,
-        grossWeight: formData.grossWeight,
-        netWeight: formData.netWeight,
-        stoneWeight: formData.stoneWeight || '',
-        diamondHeight: formData.diamondHeight || '',
-        boxDetails: formData.boxDetails || '',
-        size: formData.size || '',
-        stoneAmount: formData.stoneAmount || '',
-        diamondAmount: formData.diamondAmount || '',
-        hallmarkAmount: formData.hallmarkAmount || '',
-        makingPerGram: formData.makingPerGram,
-        makingPercentage: formData.makingPercentage || '',
-        makingFixedAmount: formData.makingFixedAmount || '',
-        mrp: formData.mrp || '',
+        grossWeight: formData.grossWeight ? parseFloat(formData.grossWeight) : null,
+        netWeight: formData.netWeight ? parseFloat(formData.netWeight) : null,
+        stoneWeight: formData.stoneWeight ? parseFloat(formData.stoneWeight) : null,
+        diamondHeight: formData.diamondHeight ? parseFloat(formData.diamondHeight) : null,
+        boxDetails: formData.boxDetails || null,
+        size: formData.size ? parseInt(formData.size) : null,
+        stoneAmount: formData.stoneAmount ? parseFloat(formData.stoneAmount) : null,
+        diamondAmount: formData.diamondAmount ? parseFloat(formData.diamondAmount) : null,
+        hallmarkAmount: formData.hallmarkAmount ? parseFloat(formData.hallmarkAmount) : null,
+        makingPerGram: formData.makingPerGram ? parseFloat(formData.makingPerGram) : null,
+        makingPercentage: formData.makingPercentage ? parseFloat(formData.makingPercentage) : null,
+        makingFixedAmount: formData.makingFixedAmount ? parseFloat(formData.makingFixedAmount) : null,
+        mrp: formData.mrp ? parseFloat(formData.mrp) : null,
         status: formData.status || 'Active'
       };
 
-      // Append all product fields to FormData
-      Object.entries(productFields).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          formDataInstance.append(key, value.toString());
+      // Remove null/undefined/empty values from productFields
+      Object.keys(productFields).forEach(key => {
+        if (productFields[key] === null || productFields[key] === undefined || productFields[key] === '') {
+          delete productFields[key];
         }
       });
+
+      // Convert product data to JSON string and append as 'productData'
+      const productDataJson = JSON.stringify(productFields);
+      formDataInstance.append('productData', productDataJson);
       
-      // Add image files and their metadata
-      images.forEach((image, index) => {
-        // Add the actual file - use 'images' as the key for files
+      // Add image files - use 'images' as the key for files
+      images.forEach((image) => {
         formDataInstance.append('images', image.file, image.file.name);
-        
-        // Add metadata for each image with proper indexing
-        formDataInstance.append(`Images[${index}].ImageType`, index === 0 ? 'Primary' : 'Secondary');
-        formDataInstance.append(`Images[${index}].DisplayOrder`, (index + 1).toString());
       });
 
       // Debug: Log FormData contents
       console.log('=== FormData Debug Information ===');
       console.log('Total images to upload:', images.length);
-      console.log('Product data fields:', Object.keys(productFields).length);
+      console.log('Product data JSON:', productDataJson);
       console.log('FormData instance created:', formDataInstance instanceof FormData);
       
       // Validate FormData structure
       let fileCount = 0;
-      let metadataCount = 0;
+      let hasProductData = false;
       
       // Log FormData entries for debugging
       console.log('FormData entries:');
@@ -227,16 +226,19 @@ const AddStockImageForm = () => {
           fileCount++;
           console.log(`${key}:`, `File(${value.name}, ${value.size} bytes, ${value.type})`);
         } else {
-          if (key.includes('Images[') && (key.includes('ImageType') || key.includes('DisplayOrder'))) {
-            metadataCount++;
+          if (key === 'productData') {
+            hasProductData = true;
           }
-          console.log(`${key}:`, value);
+          console.log(`${key}:`, typeof value === 'string' && value.length > 100 ? value.substring(0, 100) + '...' : value);
         }
       }
       
-      console.log(`Validation: ${fileCount} files, ${metadataCount} image metadata entries`);
+      console.log(`Validation: ${fileCount} files, productData: ${hasProductData}`);
       
       // Additional validation
+      if (!hasProductData) {
+        throw new Error('Product data is missing from FormData');
+      }
       if (fileCount !== images.length) {
         throw new Error(`File count mismatch: expected ${images.length}, found ${fileCount}`);
       }

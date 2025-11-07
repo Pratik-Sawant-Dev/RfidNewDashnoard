@@ -63,10 +63,13 @@ const SuspenseLoader = ({
 
           {/* Brand name */}
           <div className="mt-8 mb-3">
-            <h2 className="text-2xl font-bold text-gradient font-elegant flex items-center justify-center gap-2">
-              <Gem className="w-6 h-6 text-primary-500" />
-              JewelRFID
-            </h2>
+            <div className="flex items-center justify-center">
+              <img 
+                src="/images/Sparkle ERP Logo.svg" 
+                alt="Sparkle ERP Logo" 
+                className="h-8 w-auto"
+              />
+            </div>
           </div>
 
           {/* Loading text with dots animation */}

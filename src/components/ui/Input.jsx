@@ -9,6 +9,7 @@ const Input = forwardRef(({
   type = 'text',
   showPasswordToggle = false,
   icon: Icon,
+  iconColor = 'text-gray-400',
   required = false,
   ...props 
 }, ref) => {
@@ -37,7 +38,7 @@ const Input = forwardRef(({
       <div className="relative">
         {hasIcon && (
           <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <Icon className="h-5 w-5 text-gray-400" />
+            <Icon className={clsx('h-5 w-5', iconColor)} />
           </div>
         )}
         <input

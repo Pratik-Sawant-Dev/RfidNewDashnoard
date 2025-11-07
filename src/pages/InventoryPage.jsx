@@ -311,34 +311,39 @@ const InventoryPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Inventory Management
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your product inventory with list and grid views
-          </p>
-        </div>
-        <div className="flex space-x-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-4">
+        {/* Label - Left Side */}
+        <label className="flex-shrink-0 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+          Inventory Management
+        </label>
+        
+        {/* Filter, Refresh, and Add - Right Side */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Filter Button */}
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto"
           >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
+            <Filter className="h-3.5 w-3.5" />
+            <span>Filters</span>
           </Button>
+          
+          {/* Refresh Button */}
           <Button
             variant="outline"
             onClick={loadProducts}
             disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </Button>
-          <Button variant="accent">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
+          
+          {/* Add Product Button */}
+          <Button variant="accent" className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto">
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Product</span>
           </Button>
         </div>
       </div>

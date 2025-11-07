@@ -24,19 +24,25 @@ const ImageUploadTester = () => {
   const createFormData = (format) => {
     const formData = new FormData();
     
-    // Add basic product data
-    formData.append('itemCode', 'TEST123');
-    formData.append('categoryName', 'Test Category');
-    formData.append('branchName', 'Test Branch');
-    formData.append('counterName', 'Test Counter');
-    formData.append('productName', 'Test Product');
-    formData.append('designName', 'Test Design');
-    formData.append('purityName', '22K');
-    formData.append('rfidCode', 'RFID123');
-    formData.append('grossWeight', '10');
-    formData.append('netWeight', '9');
-    formData.append('makingPerGram', '100');
-    formData.append('status', 'Active');
+    // Prepare product data object
+    const productData = {
+      itemCode: 'TEST123',
+      categoryName: 'Test Category',
+      branchName: 'Test Branch',
+      counterName: 'Test Counter',
+      productName: 'Test Product',
+      designName: 'Test Design',
+      purityName: '22K',
+      rfidCode: 'RFID123',
+      grossWeight: 10,
+      netWeight: 9,
+      makingPerGram: 100,
+      status: 'Active'
+    };
+
+    // Convert product data to JSON string and append as 'productData'
+    const productDataJson = JSON.stringify(productData);
+    formData.append('productData', productDataJson);
 
     // Add images based on selected format
     switch (format) {

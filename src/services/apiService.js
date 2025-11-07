@@ -107,6 +107,10 @@ class ApiService {
         url: endpoint,
         ...options,
       });
+      // For blob responses, return the blob data directly
+      if (options.responseType === 'blob') {
+        return response.data;
+      }
       return response.data;
     } catch (error) {
       console.error(`API request failed for ${endpoint}:`, error);
@@ -115,12 +119,12 @@ class ApiService {
   }
 
   // Convenience methods for different HTTP methods
-  async get(endpoint, params = {}) {
-    return this.request(endpoint, { method: 'GET', params });
+  async get(endpoint, params = {}, options = {}) {
+    return this.request(endpoint, { method: 'GET', params, ...options });
   }
 
-  async post(endpoint, data = {}) {
-    return this.request(endpoint, { method: 'POST', data });
+  async post(endpoint, data = {}, options = {}) {
+    return this.request(endpoint, { method: 'POST', data, ...options });
   }
 
   async put(endpoint, data = {}) {
@@ -210,12 +214,75 @@ class ApiService {
   }
 
   // RFID specific methods
+  async getAllRfidTags(params = {}) {
+    return this.get('/api/Rfid', params);
+  }
+
+  async getRfidTagByCode(rfidCode) {
+    return this.get(`/api/Rfid/${rfidCode}`);
+  }
+
+  async getAvailableRfidTags(params = {}) {
+    return this.get('/api/Rfid/available', params);
+  }
+
+  async updateRfidTag(rfidCode, data) {
+    return this.put(`/api/Rfid/${rfidCode}`, data);
+  }
+
+  async deleteRfidTag(rfidCode) {
+    return this.delete(`/api/Rfid/${rfidCode}`);
+  }
+
   async getRfidTags(params = {}) {
     return this.get('/api/Rfid/tags', params);
   }
 
   async assignRfidTag(tagData) {
     return this.post('/api/Rfid/assign', tagData);
+  }
+
+  async downloadRfidTemplate() {
+    return this.get('/api/Rfid/download-template', {}, { responseType: 'blob' });
+  }
+
+  async uploadRfidExcel(excelFile, updateExisting = true, createNew = true) {
+    const formData = new FormData();
+    formData.append('ExcelFile', excelFile);
+    formData.append('UpdateExisting', updateExisting.toString());
+    formData.append('CreateNew', createNew.toString());
+    
+    // Don't set Content-Type header - let axios set it automatically with boundary for FormData
+    // Create a custom axios instance for this request to avoid default JSON Content-Type
+    const currentStore = getStore();
+    const state = currentStore ? currentStore.getState() : null;
+    const config = state ? selectApiConfig(state) : getApiConfig();
+    
+    const instance = axios.create({
+      baseURL: config.baseUrl,
+      timeout: config.timeout,
+    });
+    
+    // Add auth token
+    const reduxToken = state ? selectToken(state) : null;
+    const localToken = getAuthToken();
+    const token = reduxToken || localToken;
+    
+    if (token) {
+      instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Don't set Content-Type - axios will set it with boundary automatically for FormData
+    const response = await instance.post('/api/Rfid/upload-excel', formData);
+    return response.data;
+  }
+
+  async addRfidTag(tagData) {
+    return this.post('/api/Rfid', tagData);
+  }
+
+  async bulkAddRfidTags(tagsData) {
+    return this.post('/api/Rfid/bulk', tagsData);
   }
 
   // User Management specific methods
@@ -401,6 +468,30 @@ class ApiService {
 
   async updateProduct(productId, productData) {
     return this.put(`/api/Product/${productId}`, productData);
+  }
+
+  async updateProductWithImages(productId, formData) {
+    const currentStore = getStore();
+    const state = currentStore ? currentStore.getState() : null;
+    const config = state ? selectApiConfig(state) : getApiConfig();
+    
+    const instance = axios.create({
+      baseURL: config.baseUrl,
+      timeout: config.timeout,
+      // Don't set Content-Type for FormData - let axios set it automatically with boundary
+    });
+    
+    const reduxToken = state ? selectToken(state) : null;
+    const localToken = getAuthToken();
+    const token = reduxToken || localToken;
+    
+    if (token) {
+      instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await instance.put(`/api/Product/${productId}/with-images`, formData);
+    
+    return response.data;
   }
 
   async deleteProduct(productId) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Download, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, MapPin, Save, X, Eye } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, MapPin, Save, X, Eye, Image as ImageIcon } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -44,6 +44,8 @@ const BulkAddStockForm = () => {
   const [fieldMapping, setFieldMapping] = useState({});
   const [mappedProducts, setMappedProducts] = useState([]);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [productImages, setProductImages] = useState({}); // Store images for each product by itemCode
+  const [imageDragActive, setImageDragActive] = useState(false);
   
   const { success, error } = useToast();
 
@@ -193,6 +195,68 @@ const BulkAddStockForm = () => {
     success(`${products.length} products mapped successfully!`);
   };
 
+  // Image handling functions
+  const handleImageDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setImageDragActive(true);
+    } else if (e.type === "dragleave") {
+      setImageDragActive(false);
+    }
+  };
+
+  const handleImageDrop = (e, itemCode) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleImageFiles(e.dataTransfer.files, itemCode);
+    }
+  };
+
+  const handleImageInput = (e, itemCode) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleImageFiles(e.target.files, itemCode);
+    }
+  };
+
+  const handleImageFiles = (files, itemCode) => {
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    const validFiles = Array.from(files).filter(file => {
+      if (!validImageTypes.includes(file.type)) {
+        error(`${file.name} is not a valid image format`);
+        return false;
+      }
+      if (file.size > maxSize) {
+        error(`${file.name} is too large (max 10MB)`);
+        return false;
+      }
+      return true;
+    });
+
+    const newImages = validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      id: Math.random().toString(36).substr(2, 9)
+    }));
+    
+    setProductImages(prev => ({
+      ...prev,
+      [itemCode]: [...(prev[itemCode] || []), ...newImages]
+    }));
+  };
+
+  const removeProductImage = (itemCode, imageId) => {
+    setProductImages(prev => ({
+      ...prev,
+      [itemCode]: (prev[itemCode] || []).filter(img => img.id !== imageId)
+    }));
+  };
+
   const handleSaveAll = async () => {
     if (mappedProducts.length === 0) {
       error('No products to save');
@@ -202,37 +266,75 @@ const BulkAddStockForm = () => {
     setLoading(true);
     
     try {
-      // Transform the data to match API expectations
-      const transformedProducts = mappedProducts.map(product => ({
-        ...product,
-        // Ensure numeric fields are properly converted
-        grossWeight: parseFloat(product.grossWeight) || 0,
-        netWeight: parseFloat(product.netWeight) || 0,
-        stoneWeight: product.stoneWeight ? parseFloat(product.stoneWeight) : null,
-        diamondHeight: product.diamondHeight ? parseFloat(product.diamondHeight) : null,
-        size: product.size ? parseInt(product.size) : null,
-        stoneAmount: product.stoneAmount ? parseFloat(product.stoneAmount) : null,
-        diamondAmount: product.diamondAmount ? parseFloat(product.diamondAmount) : null,
-        hallmarkAmount: product.hallmarkAmount ? parseFloat(product.hallmarkAmount) : null,
-        makingPerGram: product.makingPerGram ? parseFloat(product.makingPerGram) : null,
-        makingPercentage: product.makingPercentage ? parseFloat(product.makingPercentage) : null,
-        makingFixedAmount: product.makingFixedAmount ? parseFloat(product.makingFixedAmount) : null,
-        mrp: parseFloat(product.mrp) || 0,
-        // Ensure status has a default value
-        status: product.status || 'Active'
-      }));
+      // Process products with images
+      const productsWithImages = [];
+      
+      for (const product of mappedProducts) {
+        const productData = {
+          ...product,
+          // Ensure numeric fields are properly converted
+          grossWeight: parseFloat(product.grossWeight) || 0,
+          netWeight: parseFloat(product.netWeight) || 0,
+          stoneWeight: product.stoneWeight ? parseFloat(product.stoneWeight) : null,
+          diamondHeight: product.diamondHeight ? parseFloat(product.diamondHeight) : null,
+          size: product.size ? parseInt(product.size) : null,
+          stoneAmount: product.stoneAmount ? parseFloat(product.stoneAmount) : null,
+          diamondAmount: product.diamondAmount ? parseFloat(product.diamondAmount) : null,
+          hallmarkAmount: product.hallmarkAmount ? parseFloat(product.hallmarkAmount) : null,
+          makingPerGram: product.makingPerGram ? parseFloat(product.makingPerGram) : null,
+          makingPercentage: product.makingPercentage ? parseFloat(product.makingPercentage) : null,
+          makingFixedAmount: product.makingFixedAmount ? parseFloat(product.makingFixedAmount) : null,
+          mrp: parseFloat(product.mrp) || 0,
+          status: product.status || 'Active'
+        };
 
-      const payload = {
-        products: transformedProducts
-      };
-      
-      console.log('Sending payload:', payload);
-      
-      const response = await apiService.bulkCreateProducts(payload);
+        const images = productImages[product.itemCode] || [];
+        
+        if (images.length > 0) {
+          // Use create-with-images API for products with images
+          const formData = new FormData();
+          
+          // Remove null/undefined/empty values from productData
+          const cleanedProductData = { ...productData };
+          Object.keys(cleanedProductData).forEach(key => {
+            if (cleanedProductData[key] === null || cleanedProductData[key] === undefined || cleanedProductData[key] === '') {
+              delete cleanedProductData[key];
+            }
+          });
+
+          // Convert product data to JSON string and append as 'productData'
+          const productDataJson = JSON.stringify(cleanedProductData);
+          formData.append('productData', productDataJson);
+
+          // Add image files - use 'images' as the key for files
+          images.forEach((imgObj) => {
+            formData.append('images', imgObj.file, imgObj.file.name);
+          });
+
+          try {
+            await apiService.createProductWithImages(formData);
+          } catch (err) {
+            console.error(`Error creating product ${product.itemCode} with images:`, err);
+            throw err;
+          }
+        } else {
+          // Use regular create API for products without images
+          productsWithImages.push(productData);
+        }
+      }
+
+      // Bulk create products without images
+      if (productsWithImages.length > 0) {
+        const payload = {
+          products: productsWithImages
+        };
+        
+        await apiService.bulkCreateProducts(payload);
+      }
       
       setUploadResult({
         success: true,
-        message: response.message || 'Products added successfully',
+        message: 'Products added successfully',
         count: mappedProducts.length
       });
       
@@ -356,6 +458,7 @@ const BulkAddStockForm = () => {
     setUploadResult(null);
     setShowMappingModal(false);
     setShowPreviewModal(false);
+    setProductImages({});
   };
 
   return (
@@ -363,15 +466,15 @@ const BulkAddStockForm = () => {
       <Card>
         <div className="space-y-6">
           {/* Download Template Section */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <Download className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-start space-x-2">
+                <Download className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                  <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">
                     Download Excel Template
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
                     Start by downloading our template with the required format and sample data
                   </p>
                 </div>
@@ -380,9 +483,9 @@ const BulkAddStockForm = () => {
                 variant="outline"
                 size="sm"
                 onClick={downloadTemplate}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap text-xs px-3 py-1.5 h-auto"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-3 h-3 mr-1.5" />
                 Template
               </Button>
             </div>
@@ -390,11 +493,11 @@ const BulkAddStockForm = () => {
 
           {/* Upload Area */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Upload Excel File
             </label>
             <div
-              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-colors ${
                 dragActive
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
@@ -410,11 +513,11 @@ const BulkAddStockForm = () => {
                 onChange={handleFileInput}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              <FileSpreadsheet className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 text-gray-400" />
+              <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">
                 <span className="font-semibold text-blue-600 dark:text-blue-400">Click to upload</span> or drag and drop
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
                 Excel (.xlsx, .xls) or CSV files only
               </p>
             </div>
@@ -422,27 +525,28 @@ const BulkAddStockForm = () => {
 
           {/* Selected File */}
           {file && (
-            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FileSpreadsheet className="w-8 h-8 text-green-600" />
+            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="flex items-center space-x-2">
+                  <FileSpreadsheet className="w-6 h-6 sm:w-7 sm:h-7 text-green-600 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    <p className="text-xs font-medium text-gray-900 dark:text-white">
                       {file.name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
                       {(file.size / 1024).toFixed(2)} KB · {excelData?.length || 0} rows
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-1.5">
                   {mappedProducts.length > 0 && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowPreviewModal(true)}
+                      className="text-xs px-2.5 py-1.5 h-auto"
                     >
-                      <Eye className="w-4 h-4 mr-2" />
+                      <Eye className="w-3 h-3 mr-1.5" />
                       Preview
                     </Button>
                   )}
@@ -451,8 +555,9 @@ const BulkAddStockForm = () => {
                     size="sm"
                     onClick={clearAll}
                     disabled={loading}
+                    className="text-xs px-2.5 py-1.5 h-auto"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
@@ -461,22 +566,22 @@ const BulkAddStockForm = () => {
 
           {/* Upload Result */}
           {uploadResult && (
-            <div className={`${uploadResult.success ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} border rounded-lg p-4`}>
-              <div className="flex items-start space-x-3">
+            <div className={`${uploadResult.success ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} border rounded-lg p-3`}>
+              <div className="flex items-start space-x-2">
                 {uploadResult.success ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                 )}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                  <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">
                     {uploadResult.success ? 'Success!' : 'Error'}
                   </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
                     {uploadResult.message}
                   </p>
                   {uploadResult.success && uploadResult.count > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                       Successfully added {uploadResult.count} products
                     </p>
                   )}
@@ -491,8 +596,9 @@ const BulkAddStockForm = () => {
               <Button
                 variant="accent"
                 onClick={() => setShowMappingModal(true)}
+                className="text-xs px-3 py-1.5 h-auto"
               >
-                <MapPin className="w-4 h-4 mr-2" />
+                <MapPin className="w-3 h-3 mr-1.5" />
                 Map Fields
               </Button>
             </div>
@@ -502,22 +608,23 @@ const BulkAddStockForm = () => {
 
       {/* Instructions */}
       <Card>
-        <div className="flex items-start space-x-3">
-          <FileSpreadsheet className="w-5 h-5 text-blue-600 mt-0.5" />
+        <div className="flex items-start space-x-2">
+          <FileSpreadsheet className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-1.5">
               Bulk Upload Instructions
             </h3>
-            <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+            <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
               <li>1. Download the Excel template to see the required format</li>
               <li>2. Fill in all required fields in your Excel file</li>
               <li>3. Upload the Excel file</li>
               <li>4. Map your Excel columns to the required fields</li>
-              <li>5. Preview the data to ensure accuracy</li>
+              <li>5. Preview the data and add images (optional)</li>
               <li>6. Click "Save All" to add all products at once</li>
               <li>• Ensure RFID codes are unique for each item</li>
               <li>• Use proper data formats (numbers for weights and amounts)</li>
               <li>• Maximum 1000 rows per upload recommended</li>
+              <li>• You can add images for each product in the preview</li>
             </ul>
           </div>
         </div>
@@ -531,24 +638,24 @@ const BulkAddStockForm = () => {
           title="Map Excel Columns to Fields"
           size="lg"
         >
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="space-y-3">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               Map your Excel columns to the required fields. Fields marked with * are required.
             </p>
             
-            <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
+            <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
               {EXPECTED_FIELDS.map(field => (
-                <div key={field.key} className="flex items-center space-x-3">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div key={field.key} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                       {field.label} {field.required && <span className="text-red-500">*</span>}
                     </label>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0 w-full sm:w-auto">
                     <select
                       value={fieldMapping[field.key] !== undefined ? fieldMapping[field.key] : ''}
                       onChange={(e) => handleMappingChange(field.key, e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm"
+                      className="w-full px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                     >
                       <option value="">-- Select Column --</option>
                       {excelHeaders.map((header, index) => (
@@ -562,18 +669,20 @@ const BulkAddStockForm = () => {
               ))}
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t dark:border-gray-700">
               <Button
                 variant="outline"
                 onClick={() => setShowMappingModal(false)}
+                className="text-xs px-3 py-1.5 h-auto"
               >
                 Cancel
               </Button>
               <Button
                 variant="accent"
                 onClick={applyMapping}
+                className="text-xs px-3 py-1.5 h-auto"
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
+                <CheckCircle className="w-3 h-3 mr-1.5" />
                 Apply Mapping
               </Button>
             </div>
@@ -589,104 +698,161 @@ const BulkAddStockForm = () => {
           title={`Preview Products (${mappedProducts.length} items)`}
           size="full"
         >
-          <div className="space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Review the data below before saving. You can go back to adjust field mapping if needed.
+          <div className="space-y-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2.5">
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                Review the data below before saving. Add images (optional) for each product. You can go back to adjust field mapping if needed.
               </p>
             </div>
 
             <div className="max-h-[60vh] overflow-auto border dark:border-gray-700 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      #
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Item Code
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Product Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      RFID Code
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Gross Weight
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Net Weight
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      MRP
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                  {mappedProducts.map((product, index) => (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {index + 1}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {product.itemCode}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {product.productName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {product.categoryName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {product.rfidCode}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {product.grossWeight}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        {product.netWeight}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        ₹{product.mrp?.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          product.status === 'Active' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                        }`}>
-                          {product.status}
-                        </span>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                    <tr>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Item Code
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Product
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        RFID
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Weight
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        MRP
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Images
+                      </th>
+                      <th className="px-2 py-2 text-left text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {mappedProducts.map((product, index) => (
+                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
+                          {index + 1}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
+                          {product.itemCode}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
+                          {product.productName}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
+                          {product.categoryName}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100 font-mono">
+                          {product.rfidCode}
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
+                          <div>G: {product.grossWeight}g</div>
+                          <div>N: {product.netWeight}g</div>
+                        </td>
+                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
+                          ₹{product.mrp?.toLocaleString()}
+                        </td>
+                        <td className="px-2 py-2 text-xs">
+                          <div className="space-y-1.5">
+                            {/* Image Upload Area */}
+                            <div
+                              className={`relative border border-dashed rounded p-1.5 transition-colors ${
+                                imageDragActive
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                              }`}
+                              onDragEnter={(e) => { handleImageDrag(e); }}
+                              onDragLeave={(e) => { handleImageDrag(e); }}
+                              onDragOver={(e) => { handleImageDrag(e); }}
+                              onDrop={(e) => handleImageDrop(e, product.itemCode)}
+                            >
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => handleImageInput(e, product.itemCode)}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              />
+                              <div className="text-center">
+                                <ImageIcon className="w-3 h-3 mx-auto mb-0.5 text-gray-400" />
+                                <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                  {(productImages[product.itemCode] || []).length} img
+                                </span>
+                              </div>
+                            </div>
+                            {/* Image Previews */}
+                            {(productImages[product.itemCode] || []).length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {(productImages[product.itemCode] || []).slice(0, 2).map((img) => (
+                                  <div key={img.id} className="relative w-8 h-8">
+                                    <img
+                                      src={img.preview}
+                                      alt="Preview"
+                                      className="w-full h-full object-cover rounded border border-gray-200 dark:border-gray-700"
+                                    />
+                                    <button
+                                      onClick={() => removeProductImage(product.itemCode, img.id)}
+                                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-red-600"
+                                    >
+                                      <X className="w-2.5 h-2.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                                {(productImages[product.itemCode] || []).length > 2 && (
+                                  <div className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 text-[10px] text-gray-600 dark:text-gray-400">
+                                    +{(productImages[product.itemCode] || []).length - 2}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-2 py-2 text-xs">
+                          <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                            product.status === 'Active' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
+                            {product.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-3 border-t dark:border-gray-700">
               <Button
                 variant="outline"
                 onClick={() => {
                   setShowPreviewModal(false);
                   setShowMappingModal(true);
                 }}
+                className="text-xs px-3 py-1.5 h-auto w-full sm:w-auto"
               >
-                <MapPin className="w-4 h-4 mr-2" />
+                <MapPin className="w-3 h-3 mr-1.5" />
                 Re-map Fields
               </Button>
-              <div className="flex space-x-3">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   onClick={() => setShowPreviewModal(false)}
                   disabled={loading}
+                  className="text-xs px-3 py-1.5 h-auto flex-1 sm:flex-initial"
                 >
                   Cancel
                 </Button>
@@ -694,16 +860,17 @@ const BulkAddStockForm = () => {
                   variant="accent"
                   onClick={handleSaveAll}
                   disabled={loading}
+                  className="text-xs px-3 py-1.5 h-auto flex-1 sm:flex-initial"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
                       Saving...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save All ({mappedProducts.length} items)
+                      <Save className="w-3 h-3 mr-1.5" />
+                      Save All ({mappedProducts.length})
                     </>
                   )}
                 </Button>

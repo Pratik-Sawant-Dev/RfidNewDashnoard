@@ -3,13 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
-  Gem,
   CheckCircle,
   Building2,
   User,
-  CreditCard,
   Shield,
-  Zap,
   Loader2,
   Mail,
   Phone,
@@ -55,9 +52,9 @@ const OnboardingPage = () => {
   const [errors, setErrors] = useState({});
 
   const steps = [
-    { number: 1, title: "Organization Information", icon: Building2 },
-    { number: 2, title: "Personal Details", icon: User },
-    { number: 3, title: "Account Setup", icon: Shield },
+    { number: 1, title: "Organization", icon: Building2 },
+    { number: 2, title: "Personal", icon: User },
+    { number: 3, title: "Review", icon: Shield },
   ];
 
   const showroomTypes = [
@@ -184,7 +181,7 @@ const OnboardingPage = () => {
   };
 
   const renderStep1 = () => (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       <Input
         label="Organization Name"
         name="organisationName"
@@ -249,7 +246,7 @@ const OnboardingPage = () => {
             value={formData.address}
             onChange={handleChange}
             rows={3}
-            className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
             placeholder="Enter your complete address"
           />
           <Home className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -264,7 +261,7 @@ const OnboardingPage = () => {
   );
 
   const renderStep2 = () => (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       <Input
         label="Full Name"
         name="fullName"
@@ -311,8 +308,8 @@ const OnboardingPage = () => {
 
   const renderStep3 = () => (
     <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+      <div className="text-center mb-6">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
           Account Summary
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -320,62 +317,70 @@ const OnboardingPage = () => {
         </p>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 rounded-xl p-4 sm:p-6 space-y-4 border border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Organization:
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Organization
             </span>
-            <p className="text-gray-900 dark:text-white">
-              {formData.organisationName}
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.organisationName || "—"}
             </p>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Showroom Type:
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Showroom Type
             </span>
-            <p className="text-gray-900 dark:text-white">
-              {formData.showroomType}
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.showroomType || "—"}
             </p>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Email:
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Email
             </span>
-            <p className="text-gray-900 dark:text-white">{formData.email}</p>
-          </div>
-          <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Mobile:
-            </span>
-            <p className="text-gray-900 dark:text-white">
-              {formData.mobileNumber}
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.email || "—"}
             </p>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Full Name:
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Mobile
             </span>
-            <p className="text-gray-900 dark:text-white">{formData.fullName}</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.mobileNumber || "—"}
+            </p>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Username:
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Full Name
             </span>
-            <p className="text-gray-900 dark:text-white">{formData.userName}</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.fullName || "—"}
+            </p>
           </div>
-          <div className="md:col-span-2">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Address:
+          <div>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Username
             </span>
-            <p className="text-gray-900 dark:text-white">{formData.address}</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.userName || "—"}
+            </p>
+          </div>
+          <div className="sm:col-span-2">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Address
+            </span>
+            <p className="text-base font-medium text-gray-900 dark:text-white mt-1">
+              {formData.address || "—"}
+            </p>
           </div>
         </div>
 
-        <div className="border-t pt-3">
-          <div className="flex items-center justify-center space-x-2">
-            <Shield className="w-4 h-4 text-primary-600" />
-            <span className="text-xs text-gray-600 dark:text-gray-300">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="flex items-center justify-center space-x-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3">
+            <Shield className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
               Administrator Account - Full Access
             </span>
           </div>
@@ -385,135 +390,89 @@ const OnboardingPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Enhanced background decoration for light mode */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Primary gradient circles */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-300 to-indigo-400 dark:from-blue-800 dark:to-indigo-900 rounded-full opacity-30 dark:opacity-20 animate-bounce-gentle"></div>
-        <div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-amber-300 to-orange-400 dark:from-primary-800 dark:to-amber-900 rounded-full opacity-25 dark:opacity-20 animate-bounce-gentle"
-          style={{ animationDelay: "1s" }}
-        ></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 relative overflow-hidden">
+      {/* Modern Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Animated gradient orbs */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/30 dark:bg-blue-900/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-200/30 dark:bg-cyan-900/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-sky-200/20 dark:bg-sky-900/10 rounded-full blur-3xl"></div>
         
-        {/* Additional decorative elements for light mode */}
-        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-br from-purple-200 to-pink-300 dark:from-purple-800 dark:to-pink-900 rounded-full opacity-20 dark:opacity-10 animate-pulse-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-gradient-to-br from-emerald-200 to-teal-300 dark:from-emerald-800 dark:to-teal-900 rounded-full opacity-25 dark:opacity-10 animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
-        
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]"></div>
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] dark:opacity-20"></div>
       </div>
 
-      {/* Two-column layout for large screens - Optimized for no scrolling */}
-      <div className="relative z-10 min-h-screen flex">
-        {/* Left side - Header Content (hidden on mobile) */}
-        <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:p-6">
-          <div className="relative w-full h-full max-w-md">
-            {/* Animated background elements */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-primary-900 dark:to-gold-900 rounded-3xl transform rotate-3 animate-pulse-slow"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-rose-100 via-pink-50 to-purple-100 dark:from-gold-800 dark:to-amber-800 rounded-3xl transform -rotate-2 animate-float"></div>
-            
-            {/* Floating decorative elements */}
-            <div className="absolute top-4 right-4 w-8 h-8 bg-emerald-200 dark:bg-emerald-700 rounded-full animate-bounce-gentle opacity-60"></div>
-            <div className="absolute bottom-6 left-6 w-6 h-6 bg-rose-300 dark:bg-rose-600 rounded-full animate-bounce-gentle opacity-70" style={{ animationDelay: '1.5s' }}></div>
-            <div className="absolute top-1/3 right-6 w-5 h-5 bg-purple-300 dark:bg-purple-600 rounded-full animate-bounce-gentle opacity-50" style={{ animationDelay: '0.8s' }}></div>
-            
-            {/* Main card with header content */}
-            <div className="relative bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-white/20 dark:border-gray-700/50">
-              <div className="text-center">
-                {/* Header with logo and title */}
-                <div className="flex items-center justify-center space-x-2 mb-4">
-                  <div className="relative">
-                    <Gem className="w-8 h-8 text-primary-600 dark:text-primary-400 drop-shadow-lg" />
-                    <div className="absolute inset-0 w-8 h-8">
-                      <div className="w-full h-full rounded-full bg-primary-200 dark:bg-primary-800 animate-ping opacity-20"></div>
-                    </div>
-                  </div>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 via-blue-600 to-indigo-600 dark:from-primary-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent font-elegant">
-                    JewelRFID
-                  </span>
-                </div>
-
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Get Started with JewelRFID
-                </h1>
-                <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  Set up your jewelry management system in minutes
-                </p>
-                
-                {/* Animated gem icon */}
-                <div className="relative mb-4">
-                  <Gem className="w-16 h-16 text-primary-500 mx-auto drop-shadow-lg" />
-                  <div className="absolute inset-0 w-16 h-16 mx-auto">
-                    <div className="w-full h-full rounded-full bg-primary-200 dark:bg-primary-800 animate-ping opacity-20"></div>
-                  </div>
-                </div>
-                
-                {/* Animated feature list */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-center text-gray-600 dark:text-gray-300 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                    <div className="w-2 h-2 bg-primary-500 rounded-full mr-2 animate-pulse"></div>
-                    Easy Setup Process
-                  </div>
-                  <div className="flex items-center justify-center text-gray-600 dark:text-gray-300 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                    <div className="w-2 h-2 bg-gold-500 rounded-full mr-2 animate-pulse"></div>
-                    Professional Support
-                  </div>
-                  <div className="flex items-center justify-center text-gray-600 dark:text-gray-300 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-                    <div className="w-2 h-2 bg-accent-500 rounded-full mr-2 animate-pulse"></div>
-                    Secure & Reliable
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - Onboarding Form - Compact layout */}
-        <div className="flex-1 flex items-center justify-center p-4 lg:p-6">
-          <div className="w-full max-w-xl">
-
-            {/* Compact Progress Steps */}
-            <div className="flex justify-center mb-6">
-              <div className="flex items-center space-x-3 bg-white/50 dark:bg-gray-800/50 rounded-xl p-3 backdrop-blur-sm border border-white/20 dark:border-gray-700/50">
-                {steps.map((step, index) => (
-                  <div key={step.number} className="flex items-center">
+      {/* Centered Content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="w-full max-w-2xl">
+          {/* Progress Steps - Modern Design */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-center">
+              {steps.map((step, index) => (
+                <React.Fragment key={step.number}>
+                  <div className="flex flex-col items-center">
                     <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md transition-all duration-300 ${
+                      className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 transition-all duration-300 ${
                         currentStep >= step.number
-                          ? "bg-gradient-to-r from-primary-600 to-blue-600 text-white shadow-primary-200 dark:shadow-primary-800"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                          ? "bg-gradient-to-br from-blue-600 to-cyan-600 border-blue-600 text-white shadow-lg shadow-blue-500/50 scale-110"
+                          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
                       }`}
                     >
-                      <step.icon className="w-5 h-5" />
+                      <step.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    {index < steps.length - 1 && (
-                      <div
-                        className={`w-12 h-1.5 mx-2 rounded-full transition-all duration-300 ${
-                          currentStep > step.number
-                            ? "bg-gradient-to-r from-primary-600 to-blue-600"
-                            : "bg-gray-200 dark:bg-gray-700"
-                        }`}
-                      />
-                    )}
+                    <span className={`mt-2 text-xs sm:text-sm font-medium hidden sm:block ${
+                      currentStep >= step.number
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}>
+                      {step.title}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  {index < steps.length - 1 && (
+                    <div
+                      className={`h-0.5 w-12 sm:w-16 md:w-24 mx-2 sm:mx-4 transition-all duration-300 ${
+                        currentStep > step.number
+                          ? "bg-gradient-to-r from-blue-600 to-cyan-600"
+                          : "bg-gray-300 dark:bg-gray-700"
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
             </div>
+          </div>
 
-            {/* Compact Form */}
-            <Card className="shadow-xl border border-white/20 dark:border-gray-700/50 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
+          {/* Registration Form Card */}
+          <Card className="shadow-2xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg">
+            <div className="p-4 sm:p-6 md:p-8">
+              {/* Step Indicator Text */}
+              <div className="mb-6 sm:mb-8 text-center">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  {currentStep === 1 && "Organization Details"}
+                  {currentStep === 2 && "Personal Information"}
+                  {currentStep === 3 && "Review & Complete"}
+                </h2>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                  Step {currentStep} of {steps.length}
+                </p>
+              </div>
+
+              {/* Form Content */}
               <form onSubmit={handleSubmit}>
-                {currentStep === 1 && renderStep1()}
-                {currentStep === 2 && renderStep2()}
-                {currentStep === 3 && renderStep3()}
+                <div className="min-h-[400px] sm:min-h-[450px]">
+                  {currentStep === 1 && renderStep1()}
+                  {currentStep === 2 && renderStep2()}
+                  {currentStep === 3 && renderStep3()}
+                </div>
 
                 {/* Navigation Buttons */}
-                <div className="flex justify-between mt-6">
+                <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={prevStep}
                     disabled={currentStep === 1}
+                    className="w-full sm:w-auto border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
@@ -522,16 +481,16 @@ const OnboardingPage = () => {
                   {currentStep < 3 ? (
                     <Button
                       type="button"
-                      className="bg-gradient-primary"
+                      className="border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-md hover:shadow-lg transition-all w-full sm:w-auto font-medium"
                       onClick={nextStep}
                     >
-                      Next
+                      Next Step
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   ) : (
                     <Button
                       type="submit"
-                      className="bg-gradient-primary"
+                      className="border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-md hover:shadow-lg transition-all w-full sm:w-auto font-medium"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -550,23 +509,30 @@ const OnboardingPage = () => {
                 </div>
               </form>
 
-              {/* Back to Home - moved to bottom of card */}
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
+              {/* Footer Links */}
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+                <Link
+                  to="/login"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                >
+                  Already have an account? Sign in
+                </Link>
+                <span className="hidden sm:inline text-gray-300 dark:text-gray-600">•</span>
                 <Link
                   to="/"
                   className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  <ArrowLeft className="w-4 h-4 mr-1" />
                   Back to Home
                 </Link>
               </div>
-            </Card>
-          </div>
+            </div>
+          </Card>
         </div>
       </div>
 
-      {/* Theme Toggle - moved to bottom right */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Theme Toggle */}
+      <div className="fixed top-6 right-6 z-50">
         <ThemeToggle />
       </div>
 

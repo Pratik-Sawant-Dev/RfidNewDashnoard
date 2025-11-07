@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, UserCheck, Edit3, Key, Bell, Shield, Calendar, MapPin, Phone, Mail, Plus, Trash2, Eye, RefreshCw } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import DataTable from '../../components/crud/DataTable';
-import UserForm from '../../components/crud/UserForm';
 import PermissionsModal from '../../components/ui/PermissionsModal';
 import useToast from '../../hooks/useToast';
-import { registerSubUser, getUsersUnderAdmin, updateUser, deleteUser } from '../../services/userApi';
+import { getUsersUnderAdmin, deleteUser } from '../../services/userApi';
 import { ToastContainer } from '../../components/ui/Toast';
 import ConfirmAlert from '../../components/ui/ConfirmAlert';
 
 const UserPage = () => {
+  const navigate = useNavigate();
   const { user, organizationInfo } = useAuth();
   const { success, error, toasts, removeToast } = useToast();
   
   // State for CRUD operations
   const [users, setUsers] = useState([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
   const [viewingUser, setViewingUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, users: [] });
@@ -138,13 +137,11 @@ const UserPage = () => {
 
   // CRUD Operations
   const handleAddUser = () => {
-    setEditingUser(null);
-    setIsFormOpen(true);
+    navigate('/management/users/add?isAdmin=false');
   };
 
   const handleEditUser = (user) => {
-    setEditingUser(user);
-    setIsFormOpen(true);
+    navigate(`/management/users/edit/${user.userId || user.id}?isAdmin=false`);
   };
 
   const handleViewUser = (user) => {
@@ -175,79 +172,6 @@ const UserPage = () => {
     } catch (err) {
       console.error('Failed to delete users:', err);
       const errorMessage = err.response?.data?.message || err.message || 'Failed to delete users. Please try again.';
-      error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFormSubmit = async (formData) => {
-    try {
-      setIsLoading(true);
-      
-      // Debug: Log current user and token
-      console.log('Current user:', user);
-      console.log('Token from Redux:', user?.token);
-      console.log('Token from localStorage:', localStorage.getItem('authToken'));
-      
-      if (editingUser) {
-        // Update existing user - include all updatable fields
-        const updatePayload = {
-          userName: formData.userName,
-          email: formData.email,
-          fullName: formData.fullName,
-          mobileNumber: formData.mobileNumber,
-          city: formData.city,
-          address: formData.address,
-          organisationName: formData.organisationName,
-          showroomType: formData.showroomType,
-          branchId: parseInt(formData.branchId),
-          counterId: parseInt(formData.counterId),
-          permissions: formData.permissions || [],
-          isAdmin: false,
-          userType: 'User',
-          isActive: true
-        };
-        
-        console.log('Update payload:', updatePayload);
-        await updateUser(editingUser.userId || editingUser.id, updatePayload);
-        success('User updated successfully');
-        
-        // Refresh the user list and close form
-        await fetchUsers();
-        setIsFormOpen(false);
-      } else {
-        // Add new user - include all required fields
-        const createPayload = {
-          userName: formData.userName,
-          email: formData.email,
-          password: formData.password,
-          fullName: formData.fullName,
-          mobileNumber: formData.mobileNumber,
-          city: formData.city,
-          address: formData.address,
-          organisationName: formData.organisationName,
-          showroomType: formData.showroomType,
-          branchId: parseInt(formData.branchId),
-          counterId: parseInt(formData.counterId),
-          permissions: formData.permissions || [],
-          isAdmin: false,
-          userType: 'User',
-          adminUserId: user?.userId || user?.id // Use current user's ID as admin
-        };
-        
-        console.log('Create payload:', createPayload);
-        await registerSubUser(createPayload);
-        success('User created successfully');
-        
-        // Refresh the user list and close form
-        await fetchUsers();
-        setIsFormOpen(false);
-      }
-    } catch (err) {
-      console.error('Failed to save user:', err);
-      console.error('Error response:', err.response);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to save user. Please try again.';
       error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -331,16 +255,6 @@ const UserPage = () => {
         filterable={true}
         exportable={true}
         isLoading={isLoading}
-      />
-
-      {/* User Form Modal */}
-      <UserForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={handleFormSubmit}
-        user={editingUser}
-        title={editingUser ? 'Edit User' : 'Add New User'}
-        isAdmin={false}
       />
 
       {/* Toast Container */}

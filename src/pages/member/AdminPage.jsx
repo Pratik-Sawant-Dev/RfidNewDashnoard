@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, Users, Settings, UserPlus, UserCheck, AlertTriangle, Database, Activity } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import Card from '../../components/ui/Card';
 import DataTable from '../../components/crud/DataTable';
-import UserForm from '../../components/crud/UserForm';
 import useToast from '../../hooks/useToast';
 
 const AdminPage = () => {
+  const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { success, error } = useToast();
   
@@ -46,9 +47,6 @@ const AdminPage = () => {
       lastLoginDate: '2024-01-19T15:45:00Z'
     }
   ]);
-  
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingAdmin, setEditingAdmin] = useState(null);
   const [viewingAdmin, setViewingAdmin] = useState(null);
 
   // Redirect non-admin users
@@ -121,13 +119,11 @@ const AdminPage = () => {
 
   // CRUD Operations
   const handleAddAdmin = () => {
-    setEditingAdmin(null);
-    setIsFormOpen(true);
+    navigate('/management/users/add?isAdmin=true');
   };
 
   const handleEditAdmin = (admin) => {
-    setEditingAdmin(admin);
-    setIsFormOpen(true);
+    navigate(`/management/users/edit/${admin.id}?isAdmin=true`);
   };
 
   const handleViewAdmin = (admin) => {
@@ -141,30 +137,6 @@ const AdminPage = () => {
       const idsToDelete = adminsToDelete.map(a => a.id);
       setAdmins(prev => prev.filter(admin => !idsToDelete.includes(admin.id)));
       success(`${adminsToDelete.length} admin(s) deleted successfully`);
-    }
-  };
-
-  const handleFormSubmit = (formData) => {
-    if (editingAdmin) {
-      // Update existing admin
-      setAdmins(prev => prev.map(a => 
-        a.id === editingAdmin.id 
-          ? { ...a, ...formData, id: editingAdmin.id, isAdmin: true, userType: 'Admin' }
-          : a
-      ));
-      success('Admin updated successfully');
-    } else {
-      // Add new admin
-      const newAdmin = {
-        ...formData,
-        id: Date.now(), // In real app, this would come from API
-        isAdmin: true,
-        userType: 'Admin',
-        createdOn: new Date().toISOString(),
-        lastLoginDate: null,
-      };
-      setAdmins(prev => [...prev, newAdmin]);
-      success('Admin created successfully');
     }
   };
 
@@ -216,16 +188,6 @@ const AdminPage = () => {
         searchable={true}
         filterable={true}
         exportable={true}
-      />
-
-      {/* Admin Form Modal */}
-      <UserForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={handleFormSubmit}
-        user={editingAdmin}
-        title={editingAdmin ? 'Edit Admin' : 'Add New Admin'}
-        isAdmin={true}
       />
 
       {/* System Overview */}

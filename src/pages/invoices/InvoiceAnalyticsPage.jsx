@@ -9,7 +9,8 @@ import {
   Calendar,
   Download,
   RefreshCw,
-  Filter
+  Filter,
+  CreditCard
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -164,30 +165,31 @@ const InvoiceAnalyticsPage = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Invoice Analytics
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Detailed analytics and insights for your invoice data
-          </p>
-        </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        {/* Label - Left Side */}
+        <label className="flex-shrink-0 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+          Invoice Analytics
+        </label>
+        
+        {/* Refresh and Export - Right Side */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Refresh Button */}
           <Button
             onClick={fetchAnalytics}
             variant="outline"
-            className="flex items-center space-x-2"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto"
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
+          
+          {/* Export Button */}
           <Button
             onClick={exportAnalytics}
-            className="flex items-center space-x-2"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             <span>Export</span>
           </Button>
         </div>

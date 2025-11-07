@@ -114,23 +114,24 @@ const StockMovementReportsPage = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Stock Movement Reports
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Track all stock additions, sales, transfers, and adjustments
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={fetchStockMovements} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-4">
+        {/* Label - Left Side */}
+        <label className="flex-shrink-0 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+          Stock Movement Reports
+        </label>
+        
+        {/* Refresh and Export - Right Side */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Refresh Button */}
+          <Button variant="outline" onClick={fetchStockMovements} disabled={loading} className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto">
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </Button>
-          <Button variant="accent" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
+          
+          {/* Export Button */}
+          <Button variant="accent" onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto">
+            <Download className="w-3.5 h-3.5" />
+            <span>Export</span>
           </Button>
         </div>
       </div>

@@ -170,33 +170,35 @@ const CounterPage = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      {/* Header with Label, Search, and Add */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-6">
+        {/* Label - Left Side */}
+        <label className="flex-shrink-0 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
           Counter Management
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Manage sales counters and their locations
-        </p>
-      </div>
-
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="Search counters..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        </label>
+        
+        {/* Search and Add - Right Side */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Search Bar */}
+          <div className="flex-shrink-0 w-full sm:w-64 md:w-80">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
           </div>
+          
+          {/* Add Button */}
+          <Button onClick={handleAdd} className="flex items-center gap-1.5 px-3 py-1.5 text-xs h-auto">
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add</span>
+          </Button>
         </div>
-        <Button onClick={handleAdd} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Add Counter
-        </Button>
       </div>
 
       {/* Counters Table */}

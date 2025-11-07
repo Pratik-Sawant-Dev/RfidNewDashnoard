@@ -11,9 +11,9 @@ import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
-import PurchaseEntryPage from './pages/PurchaseEntryPage';
 import AddStockPage from './pages/AddStockPage';
 import InventoryPage from './pages/InventoryPage';
+import ProductListPage from './pages/ProductListPage';
 import InvoicePage from './pages/InvoicePage';
 
 // Reports Pages - API Integrated
@@ -39,6 +39,7 @@ import UserPage from './pages/member/UserPage';
 
 // Management Pages
 import UserManagementPage from './pages/management/UserManagementPage';
+import AddEditUserPage from './pages/management/AddEditUserPage';
 import SystemMonitoringPage from './pages/management/SystemMonitoringPage';
 
 // Master Pages
@@ -49,6 +50,16 @@ import PurityPage from './pages/master/PurityPage';
 import BranchPage from './pages/master/BranchPage';
 import CounterPage from './pages/master/CounterPage';
 import BoxPage from './pages/master/BoxPage';
+
+// RFID Hub Pages
+import AddRFIDPage from './pages/rfid-hub/AddRFIDPage';
+import AllRFIDTagsListPage from './pages/rfid-hub/AllRFIDTagsListPage';
+import UnusedRFIDTagsListPage from './pages/rfid-hub/UnusedRFIDTagsListPage';
+
+// Product Pages
+import ProductViewPage from './pages/ProductViewPage';
+import ProductEditPage from './pages/ProductEditPage';
+import ProductCatalogPage from './pages/ProductCatalogPage';
 
 // Layout Components
 import Sidebar from './components/layout/Sidebar';
@@ -133,14 +144,6 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <DashboardPage />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/purchase-entry" element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <PurchaseEntryPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -232,6 +235,22 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <UserManagementPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/management/users/add" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AddEditUserPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/management/users/edit/:id" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AddEditUserPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -358,80 +377,60 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Inventory Sub-routes */}
-            <Route path="/inventory/stock" element={
+            {/* Inventory Route */}
+            <Route path="/inventory/product-list" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <AddStockPage />
+                  <ProductListPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            <Route path="/inventory/catalog" element={
+            <Route path="/inventory/product/:productId" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <InventoryPage />
+                  <ProductViewPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            <Route path="/inventory/rfid-tags" element={
+            <Route path="/inventory/product/:productId/edit" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                      RFID Tags Management
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      RFID tags management coming soon...
-                    </p>
-                  </div>
+                  <ProductEditPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            {/* Sales Sub-routes */}
-            <Route path="/sales/pos" element={
+            <Route path="/inventory/product-catalog" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                      Point of Sale
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Point of sale system coming soon...
-                    </p>
-                  </div>
+                  <ProductCatalogPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            <Route path="/sales/history" element={
+            {/* RFID Hub Routes */}
+            <Route path="/rfid-hub/add-rfid" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                      Sales History
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Sales history coming soon...
-                    </p>
-                  </div>
+                  <AddRFIDPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
             
-            <Route path="/sales/customers" element={
+            <Route path="/rfid-hub/all-tags" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                      Customer Management
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Customer management coming soon...
-                    </p>
-                  </div>
+                  <AllRFIDTagsListPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/rfid-hub/unused-tags" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <UnusedRFIDTagsListPage />
                 </MainLayout>
               </ProtectedRoute>
             } />
