@@ -13,14 +13,14 @@ import {
   Plus,
   RefreshCw
 } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import Modal from '../components/ui/Modal';
-import Pagination from '../components/ui/Pagination';
-import apiService from '../services/apiService';
-import useToast from '../hooks/useToast';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
+import Modal from '../../components/ui/Modal';
+import Pagination from '../../components/ui/Pagination';
+import apiService from '../../services/apiService';
+import useToast from '../../hooks/useToast';
 
 const InventoryPage = () => {
   const [products, setProducts] = useState([]);

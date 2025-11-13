@@ -27,7 +27,6 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Plus,
-  Download,
   Radio,
   QrCode,
   List,
@@ -46,6 +45,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     member: false,
     master: false,
     rfidhub: false,
+    quotation: false,
   });
   
   // Sidebar collapse state for large screens
@@ -104,11 +104,17 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Receipt,
       iconColor: 'text-amber-600 dark:text-amber-400',
       submenu: [
-        { name: 'Manage', path: '/invoices', icon: Receipt, iconColor: 'text-amber-600 dark:text-amber-400' },
-        { name: 'View All', path: '/invoices/list', icon: FileText, iconColor: 'text-blue-600 dark:text-blue-400' },
-        { name: 'Create New', path: '/invoices/create', icon: Plus, iconColor: 'text-green-600 dark:text-green-400' },
-        { name: 'Analytics', path: '/invoices/analytics', icon: BarChart3, iconColor: 'text-purple-600 dark:text-purple-400' },
-        { name: 'Reports', path: '/invoices/reports', icon: Download, iconColor: 'text-indigo-600 dark:text-indigo-400' },
+        { name: 'Create Invoice', path: '/invoices/create', icon: Plus, iconColor: 'text-green-600 dark:text-green-400' },
+        { name: 'List of Invoice', path: '/invoices/list', icon: FileText, iconColor: 'text-blue-600 dark:text-blue-400' },
+      ],
+    },
+    {
+      name: 'Quotation',
+      icon: FileText,
+      iconColor: 'text-teal-600 dark:text-teal-400',
+      submenu: [
+        { name: 'Create Quotation', path: '/quotation/create', icon: Plus, iconColor: 'text-green-600 dark:text-green-400' },
+        { name: 'Quotation List', path: '/quotation/list', icon: FileText, iconColor: 'text-blue-600 dark:text-blue-400' },
       ],
     },
     {

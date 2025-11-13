@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Mail, Lock, Gem, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Gem, ArrowLeft, Eye, EyeOff, Radio } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch } from "react-redux";
-import ThemeToggle from "../components/ui/ThemeToggle";
-import { ToastContainer } from "../components/ui/Toast";
-import useToast from "../hooks/useToast";
-import { loginUser } from "../utils/api";
-import { loginStart, loginSuccess, loginFailure } from "../store/slices/authSlice";
-import useAuth from "../hooks/useAuth";
+import ThemeToggle from "../../components/ui/ThemeToggle";
+import { ToastContainer } from "../../components/ui/Toast";
+import useToast from "../../hooks/useToast";
+import { loginUser } from "../../utils/api";
+import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice";
+import useAuth from "../../hooks/useAuth";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -80,20 +80,20 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 via-purple-50/20 to-pink-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 relative overflow-hidden">
-      {/* Subtle multi-color background decorative elements */}
+    <div className="min-h-screen bg-gradient-to-br from-[#E6F2FF] via-white to-[#FFE6E6] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 relative overflow-hidden">
+      {/* Premium Background Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/20 to-cyan-200/15 dark:from-blue-900/10 dark:to-cyan-900/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/15 dark:from-purple-900/10 dark:to-pink-900/5 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-indigo-100/10 via-violet-100/10 to-fuchsia-100/10 dark:from-indigo-900/5 dark:via-violet-900/5 dark:to-fuchsia-900/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#0077D4]/10 dark:bg-[#0077D4]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#D60000]/10 dark:bg-[#D60000]/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 sm:w-[500px] sm:h-[500px] bg-gradient-to-r from-[#0077D4]/5 via-[#8B3D8B]/5 to-[#D60000]/5 dark:from-[#0077D4]/3 dark:via-[#8B3D8B]/3 dark:to-[#D60000]/3 rounded-full blur-3xl"></div>
       </div>
 
       {/* Centered Login Form */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
         <div className="w-full max-w-[420px] sm:max-w-[440px]">
-          {/* Login Form Card */}
-          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 lg:p-7 shadow-xl border border-gray-200/60 dark:border-gray-700/60">
-            {/* Logo inside container */}
+          {/* Premium Login Form Card */}
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+            {/* Logo and Header */}
             <div className="text-center mb-6 sm:mb-8">
               <div className="flex items-center justify-center mb-4">
                 <img 
@@ -102,19 +102,24 @@ const LoginPage = () => {
                   className="h-10 sm:h-12 w-auto"
                 />
               </div>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 font-normal">
+              <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#0077D4]/10 to-[#D60000]/10 dark:from-[#0077D4]/20 dark:to-[#D60000]/20 rounded-full text-xs sm:text-sm font-semibold text-black dark:text-white mb-3 border border-[#0077D4]/20 dark:border-[#0077D4]/30">
+                <Radio className="w-3 h-3 sm:w-4 sm:h-4 mr-2 text-[#0077D4]" />
+                RFID Dashboard Access
+              </div>
+              <p className="text-sm sm:text-base text-black/70 dark:text-gray-400 font-normal">
                 Sign in to your account
               </p>
             </div>
+            
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
               {/* Email Field */}
               <div>
-                <label className="block text-xs sm:text-[13px] font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-[13px] font-medium text-black dark:text-gray-300 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Mail className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-gray-400 dark:text-gray-500" />
+                    <Mail className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-[#0077D4] dark:text-[#0077D4]" />
                   </div>
                   <Controller
                     name="email"
@@ -129,7 +134,7 @@ const LoginPage = () => {
                     render={({ field }) => (
                       <input
                         type="email"
-                        className="w-full pl-9 sm:pl-10 pr-3 py-2.5 sm:py-2.5 md:py-3 text-[13px] sm:text-sm md:text-[15px] border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all"
+                        className="w-full pl-9 sm:pl-10 pr-3 py-2.5 sm:py-2.5 md:py-3 text-[13px] sm:text-sm md:text-[15px] border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-black dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#0077D4] dark:focus:border-[#0077D4] focus:ring-2 focus:ring-[#0077D4]/20 dark:focus:ring-[#0077D4]/30 transition-all"
                         placeholder="admin@jewelrystore.com"
                         {...field}
                       />
@@ -143,12 +148,12 @@ const LoginPage = () => {
 
               {/* Password Field */}
               <div>
-                <label className="block text-xs sm:text-[13px] font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-[13px] font-medium text-black dark:text-gray-300 mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Lock className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-gray-400 dark:text-gray-500" />
+                    <Lock className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-[#0077D4] dark:text-[#0077D4]" />
                   </div>
                   <Controller
                     name="password"
@@ -163,7 +168,7 @@ const LoginPage = () => {
                     render={({ field }) => (
                       <input
                         type={showPassword ? "text" : "password"}
-                        className="w-full pl-9 sm:pl-10 pr-9 sm:pr-10 py-2.5 sm:py-2.5 md:py-3 text-[13px] sm:text-sm md:text-[15px] border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-all"
+                        className="w-full pl-9 sm:pl-10 pr-9 sm:pr-10 py-2.5 sm:py-2.5 md:py-3 text-[13px] sm:text-sm md:text-[15px] border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/50 text-black dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#0077D4] dark:focus:border-[#0077D4] focus:ring-2 focus:ring-[#0077D4]/20 dark:focus:ring-[#0077D4]/30 transition-all"
                         placeholder="••••••••"
                         {...field}
                       />
@@ -172,7 +177,7 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-[#0077D4] dark:text-gray-500 dark:hover:text-[#0077D4] transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
@@ -191,25 +196,25 @@ const LoginPage = () => {
                 <label className="flex items-center cursor-pointer group">
                   <input
                     type="checkbox"
-                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900/30 focus:ring-offset-0 cursor-pointer transition-colors"
+                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-[#0077D4] focus:ring-2 focus:ring-[#0077D4]/20 dark:focus:ring-[#0077D4]/30 focus:ring-offset-0 cursor-pointer transition-colors"
                   />
-                  <span className="ml-2 text-xs sm:text-[13px] text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors font-normal">
+                  <span className="ml-2 text-xs sm:text-[13px] text-black/70 dark:text-gray-400 group-hover:text-black dark:group-hover:text-gray-200 transition-colors font-normal">
                     Remember me
                   </span>
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs sm:text-[13px] text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
+                  className="text-xs sm:text-[13px] text-[#0077D4] hover:text-[#0055AA] dark:text-[#0077D4] dark:hover:text-[#0099FF] font-medium transition-colors"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              {/* Sign In Button - Zoho style */}
+              {/* Sign In Button - Premium Gradient */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 sm:py-3 md:py-3.5 px-4 rounded-lg font-medium text-xs sm:text-sm md:text-[15px] text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900/30 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
+                className="w-full py-2.5 sm:py-3 md:py-3.5 px-4 rounded-lg font-medium text-xs sm:text-sm md:text-[15px] text-white bg-gradient-to-r from-[#0077D4] to-[#D60000] hover:from-[#0055AA] hover:to-[#AA0000] focus:outline-none focus:ring-2 focus:ring-[#0077D4]/30 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
@@ -227,11 +232,11 @@ const LoginPage = () => {
 
             {/* Get started link */}
             <div className="mt-5 sm:mt-6 text-center">
-              <p className="text-xs sm:text-[13px] text-gray-500 dark:text-gray-400 font-normal">
+              <p className="text-xs sm:text-[13px] text-black/60 dark:text-gray-400 font-normal">
                 Don't have an account?{" "}
                 <Link
                   to="/onboarding"
-                  className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors"
+                  className="text-[#0077D4] hover:text-[#0055AA] dark:text-[#0077D4] dark:hover:text-[#0099FF] font-medium transition-colors"
                 >
                   Get started
                 </Link>
@@ -242,7 +247,7 @@ const LoginPage = () => {
             <div className="mt-5 sm:mt-6 pt-5 border-t border-gray-200/80 dark:border-gray-700/80 text-center">
               <Link
                 to="/"
-                className="inline-flex items-center text-xs sm:text-[13px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors font-normal"
+                className="inline-flex items-center text-xs sm:text-[13px] text-black/60 dark:text-gray-400 hover:text-black dark:hover:text-gray-200 transition-colors font-normal"
               >
                 <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                 Back to Home

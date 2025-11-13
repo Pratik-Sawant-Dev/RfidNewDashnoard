@@ -1,9 +1,9 @@
 import React from 'react';
-import { Menu, Bell, User, Search, ChevronLeft, ChevronRight, LayoutPanelLeft } from 'lucide-react';
+import { Menu, Bell, User, ChevronLeft, ChevronRight, LayoutPanelLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import ThemeToggle from '../ui/ThemeToggle';
-import Input from '../ui/Input';
+import PageSearch from './PageSearch';
 import useAuth from '../../hooks/useAuth';
 
 const Header = ({ onMenuToggle, isSidebarOpen, onRightSidebarToggle, isRightSidebarOpen }) => {
@@ -12,7 +12,7 @@ const Header = ({ onMenuToggle, isSidebarOpen, onRightSidebarToggle, isRightSide
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 lg:px-6 sticky top-0 z-40 shadow-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
         {/* Left side */}
         <div className="flex items-center space-x-4">
           <button
@@ -23,16 +23,16 @@ const Header = ({ onMenuToggle, isSidebarOpen, onRightSidebarToggle, isRightSide
             <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
           
-          {/* Search */}
-          <div className="hidden md:block w-64">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search products, customers..."
-                className="pl-10"
-              />
-            </div>
+          {/* Page Search - Desktop */}
+          <div className="hidden md:block w-full max-w-md mx-4">
+            <PageSearch />
           </div>
+
+        </div>
+
+        {/* Mobile Search - Full Width (shown on mobile) */}
+        <div className="md:hidden w-full -mx-4 px-4 pt-2 pb-2 border-t border-gray-200 dark:border-gray-700">
+          <PageSearch />
         </div>
 
         {/* Right side */}

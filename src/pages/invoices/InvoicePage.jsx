@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Plus, Minus, Search, FileText, Calendar, User, DollarSign, Download } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Card from '../components/ui/Card';
-import Modal from '../components/ui/Modal';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Card from '../../components/ui/Card';
+import Modal from '../../components/ui/Modal';
 
 const InvoicePage = () => {
   const [showCustomerModal, setShowCustomerModal] = useState(false);

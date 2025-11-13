@@ -8,13 +8,13 @@ import {
   X,
   Plus,
 } from 'lucide-react';
-import Card from '../components/ui/Card';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
-import Select from '../components/ui/Select';
-import { ToastContainer } from '../components/ui/Toast';
-import apiService from '../services/apiService';
-import useToast from '../hooks/useToast';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Select from '../../components/ui/Select';
+import { ToastContainer } from '../../components/ui/Toast';
+import apiService from '../../services/apiService';
+import useToast from '../../hooks/useToast';
 
 const ProductEditPage = () => {
   const { productId } = useParams();

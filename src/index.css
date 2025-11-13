@@ -107,6 +107,20 @@
     animation: bounce-gentle 3s ease-in-out infinite;
   }
 
+  /* Bounce Slow Animation for Chatbot Button */
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+  }
+
   /* Fade in up animation */
   @keyframes fade-in-up {
     0% {

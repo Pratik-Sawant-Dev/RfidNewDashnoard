@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import apiReducer from './slices/apiSlice';
 import authReducer from './slices/authSlice';
 import permissionReducer from './slices/permissionSlice';
+import dashboardReducer from './slices/dashboardSlice';
 
 // Configure the Redux store
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     api: apiReducer,
     auth: authReducer,
     permissions: permissionReducer,
+    dashboard: dashboardReducer,
     // Add other slices here as needed
     // inventory: inventoryReducer,
     // etc.

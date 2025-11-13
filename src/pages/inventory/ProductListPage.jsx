@@ -12,11 +12,11 @@ import {
   XCircle,
   Eye,
 } from 'lucide-react';
-import Card from '../components/ui/Card';
-import Pagination from '../components/ui/Pagination';
-import { ToastContainer } from '../components/ui/Toast';
-import apiService from '../services/apiService';
-import useToast from '../hooks/useToast';
+import Card from '../../components/ui/Card';
+import Pagination from '../../components/ui/Pagination';
+import { ToastContainer } from '../../components/ui/Toast';
+import apiService from '../../services/apiService';
+import useToast from '../../hooks/useToast';
 
 const ProductListPage = () => {
   const navigate = useNavigate();

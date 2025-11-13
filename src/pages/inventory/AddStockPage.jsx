@@ -15,16 +15,16 @@ import {
   Plus,
   Settings,
 } from "lucide-react";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/Input";
-import Select from "../components/ui/Select";
-import Card from "../components/ui/Card";
-import Pagination from "../components/ui/Pagination";
-import { ToastContainer } from "../components/ui/Toast";
-import AddStockImageForm from "../components/stock/AddStockImageForm";
-import BulkAddStockForm from "../components/stock/BulkAddStockForm";
-import apiService from "../services/apiService";
-import useToast from "../hooks/useToast";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Select from "../../components/ui/Select";
+import Card from "../../components/ui/Card";
+import Pagination from "../../components/ui/Pagination";
+import { ToastContainer } from "../../components/ui/Toast";
+import AddStockImageForm from "../../components/stock/AddStockImageForm";
+import BulkAddStockForm from "../../components/stock/BulkAddStockForm";
+import apiService from "../../services/apiService";
+import useToast from "../../hooks/useToast";
 
 const AddStockPage = () => {
   const [stockItems, setStockItems] = useState([]);

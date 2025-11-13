@@ -6,28 +6,30 @@ import {
   Search,
   Loader2,
   Calculator,
-  Receipt,
+  FileText,
   User,
-  CreditCard,
   Tag,
   Package,
-  AlertCircle,
   CheckCircle,
   Plus,
   Trash2,
   Layers,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Scale,
+  Gem,
+  Calendar,
+  Mail
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import useToast from '../../hooks/useToast';
-import invoiceService from '../../services/invoiceService';
+import quotationService from '../../services/quotationService';
 import apiService from '../../services/apiService';
 
-const CreateInvoicePage = () => {
+const CreateQuotationPage = () => {
   const { toasts, removeToast, success, error } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -40,37 +42,47 @@ const CreateInvoicePage = () => {
   const [productErrors, setProductErrors] = useState({});
   const productsListRef = useRef(null);
   
-  // Common invoice data (shared across all products in multiple mode)
+  // Common quotation data (shared across all products in multiple mode)
   const [commonData, setCommonData] = useState({
-    customerName: '',
-    customerPhone: '',
-    invoiceType: 'Sale',
-    paymentMethod: 'Cash',
-    soldOn: new Date().toISOString().slice(0, 16),
+    customerId: '',
+    paymentMode: 'Cash',
     isGstApplied: false,
     gstPercentage: 3.00,
-    remarks: ''
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+    remarks: '',
+    sendEmail: false,
+    oldMetalWeight: null,
+    oldMetalRate: null,
+    oldMetalAmount: null
   });
 
   // Single product form data
   const [formData, setFormData] = useState({
     productId: '',
+    itemCode: '',
     rfidCode: '',
-    customerName: '',
-    customerPhone: '',
-    sellingPrice: 0,
-    discountAmount: 0,
-    finalAmount: 0,
+    grossWeight: 0,
+    stoneWeight: 0,
+    netWeight: 0,
+    goldRate: 0,
+    making: 0,
+    makingType: 'Fixed',
+    stoneAmount: 0,
+    quantity: 1,
+    remarks: '',
+    customerId: '',
+    paymentMode: 'Cash',
     isGstApplied: false,
     gstPercentage: 3.00,
-    invoiceType: 'Sale',
-    paymentMethod: 'Cash',
-    soldOn: new Date().toISOString().slice(0, 16),
-    remarks: ''
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+    sendEmail: false,
+    oldMetalWeight: null,
+    oldMetalRate: null,
+    oldMetalAmount: null
   });
   const [errors, setErrors] = useState({});
 
-  const paymentMethods = [
+  const paymentModes = [
     { value: 'Cash', label: 'Cash' },
     { value: 'Card', label: 'Card' },
     { value: 'UPI', label: 'UPI' },
@@ -78,10 +90,9 @@ const CreateInvoicePage = () => {
     { value: 'Cheque', label: 'Cheque' }
   ];
 
-  const invoiceTypes = [
-    { value: 'Sale', label: 'Sale' },
-    { value: 'Return', label: 'Return' },
-    { value: 'Exchange', label: 'Exchange' }
+  const makingTypes = [
+    { value: 'Fixed', label: 'Fixed' },
+    { value: 'Percentage', label: 'Percentage' }
   ];
 
   const gstRates = [
@@ -93,30 +104,46 @@ const CreateInvoicePage = () => {
     { value: 28, label: '28%' }
   ];
 
-  // Validate product pricing
-  const validateProductPricing = (productId, sellingPrice, discountAmount) => {
-    const newErrors = { ...productErrors };
-    const price = parseFloat(sellingPrice) || 0;
-    const discount = parseFloat(discountAmount) || 0;
+  // Calculate net weight
+  const calculateNetWeight = (grossWeight, stoneWeight) => {
+    return Math.max(0, (parseFloat(grossWeight) || 0) - (parseFloat(stoneWeight) || 0));
+  };
 
-    if (price < 0) {
-      newErrors[`${productId}_price`] = 'Selling price cannot be negative';
-    } else if (price === 0) {
-      newErrors[`${productId}_price`] = 'Selling price must be greater than 0';
-    } else {
-      delete newErrors[`${productId}_price`];
-    }
+  // Calculate product total
+  const calculateProductTotal = (product) => {
+    const netWeight = parseFloat(product.netWeight) || 0;
+    const goldRate = parseFloat(product.goldRate) || 0;
+    const making = parseFloat(product.making) || 0;
+    const makingType = product.makingType || 'Fixed';
+    const stoneAmount = parseFloat(product.stoneAmount) || 0;
+    const quantity = parseInt(product.quantity) || 1;
 
-    if (discount < 0) {
-      newErrors[`${productId}_discount`] = 'Discount cannot be negative';
-    } else if (discount > price) {
-      newErrors[`${productId}_discount`] = 'Discount cannot be greater than selling price';
-    } else {
-      delete newErrors[`${productId}_discount`];
-    }
-
-    setProductErrors(newErrors);
-    return Object.keys(newErrors).filter(key => key.startsWith(`${productId}_`)).length === 0;
+    // Gold amount
+    const goldAmount = netWeight * goldRate;
+    
+    // Making charges
+    const makingCharges = makingType === 'Percentage' 
+      ? (goldAmount * making) / 100 
+      : making;
+    
+    // Subtotal
+    const subtotal = (goldAmount + makingCharges + stoneAmount) * quantity;
+    
+    // GST
+    const isGstApplied = isMultipleMode ? commonData.isGstApplied : formData.isGstApplied;
+    const gstPercentage = isMultipleMode ? parseFloat(commonData.gstPercentage) : parseFloat(formData.gstPercentage);
+    const gstAmount = isGstApplied ? (subtotal * gstPercentage) / 100 : 0;
+    
+    // Final total
+    const total = subtotal + gstAmount;
+    
+    return {
+      goldAmount,
+      makingCharges,
+      subtotal,
+      gstAmount,
+      total
+    };
   };
 
   // Search product by RFID or Item Code
@@ -140,7 +167,6 @@ const CreateInvoicePage = () => {
 
       if (product) {
         const productId = product.id || product.productId || product.productID || '';
-        const sellingPrice = product.sellingPrice || product.price || product.makingPrice || 0;
         
         if (isMultipleMode) {
           // Check if product already added
@@ -154,32 +180,28 @@ const CreateInvoicePage = () => {
             return;
           }
 
-          // Calculate initial final amount based on current GST settings
-          const amountAfterDiscount = sellingPrice;
-          const gstAmount = commonData.isGstApplied 
-            ? (amountAfterDiscount * parseFloat(commonData.gstPercentage)) / 100 
-            : 0;
-          const finalAmount = Math.round((amountAfterDiscount + gstAmount) * 100) / 100;
-
           // Add to multiple products list
           const newProduct = {
-            id: Date.now(), // Temporary ID for list management
+            id: Date.now(),
             productId: productId,
             product: product,
-            rfidCode: product.rfidCode || '',
             itemCode: product.itemCode || '',
-            sellingPrice: sellingPrice,
-            discountAmount: 0,
-            finalAmount: finalAmount,
+            rfidCode: product.rfidCode || '',
+            grossWeight: product.weight || product.grossWeight || 0,
+            stoneWeight: product.stoneWeight || 0,
+            netWeight: calculateNetWeight(product.weight || product.grossWeight || 0, product.stoneWeight || 0),
+            goldRate: product.goldRate || 0,
+            making: product.makingCharges || product.making || 0,
+            makingType: 'Fixed',
+            stoneAmount: product.stoneAmount || 0,
+            quantity: 1,
             remarks: ''
           };
           setSelectedProducts(prev => [...prev, newProduct]);
-          // Auto-expand new product
           setExpandedProducts(prev => new Set([...prev, newProduct.id]));
           success('Product added successfully');
           setSearchQuery('');
           
-          // Scroll to new product after a short delay
           setTimeout(() => {
             if (productsListRef.current) {
               productsListRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -191,8 +213,13 @@ const CreateInvoicePage = () => {
           setFormData(prev => ({
             ...prev,
             productId: productId,
+            itemCode: product.itemCode || '',
             rfidCode: product.rfidCode || '',
-            sellingPrice: sellingPrice
+            grossWeight: product.weight || product.grossWeight || 0,
+            stoneWeight: product.stoneWeight || 0,
+            netWeight: calculateNetWeight(product.weight || product.grossWeight || 0, product.stoneWeight || 0),
+            goldRate: product.goldRate || 0,
+            making: product.makingCharges || product.making || 0
           }));
           success('Product found successfully');
         }
@@ -238,7 +265,6 @@ const CreateInvoicePage = () => {
       newSet.delete(id);
       return newSet;
     });
-    // Remove errors for this product
     setProductErrors(prev => {
       const newErrors = { ...prev };
       Object.keys(newErrors).forEach(key => {
@@ -257,21 +283,11 @@ const CreateInvoicePage = () => {
       if (p.id === id) {
         const updated = { ...p, [field]: value };
         
-        // Validate pricing fields
-        if (field === 'sellingPrice' || field === 'discountAmount') {
-          const sellingPrice = field === 'sellingPrice' ? parseFloat(value) || 0 : parseFloat(updated.sellingPrice) || 0;
-          const discountAmount = field === 'discountAmount' ? parseFloat(value) || 0 : parseFloat(updated.discountAmount) || 0;
-          validateProductPricing(id, sellingPrice, discountAmount);
+        // Recalculate net weight if gross weight or stone weight changes
+        if (field === 'grossWeight' || field === 'stoneWeight') {
+          updated.netWeight = calculateNetWeight(updated.grossWeight, updated.stoneWeight);
         }
         
-        // Recalculate final amount based on current GST settings
-        const sellingPrice = parseFloat(updated.sellingPrice) || 0;
-        const discountAmount = parseFloat(updated.discountAmount) || 0;
-        const amountAfterDiscount = sellingPrice - discountAmount;
-        const gstAmount = commonData.isGstApplied 
-          ? (amountAfterDiscount * parseFloat(commonData.gstPercentage)) / 100 
-          : 0;
-        updated.finalAmount = Math.round((amountAfterDiscount + gstAmount) * 100) / 100;
         return updated;
       }
       return p;
@@ -279,34 +295,16 @@ const CreateInvoicePage = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Validate pricing fields
-    if (field === 'sellingPrice' || field === 'discountAmount') {
-      const sellingPrice = field === 'sellingPrice' ? parseFloat(value) || 0 : parseFloat(formData.sellingPrice) || 0;
-      const discountAmount = field === 'discountAmount' ? parseFloat(value) || 0 : parseFloat(formData.discountAmount) || 0;
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
       
-      const newErrors = { ...errors };
-      if (sellingPrice < 0) {
-        newErrors.sellingPrice = 'Selling price cannot be negative';
-      } else if (sellingPrice === 0) {
-        newErrors.sellingPrice = 'Selling price must be greater than 0';
-      } else {
-        delete newErrors.sellingPrice;
+      // Recalculate net weight if gross weight or stone weight changes
+      if (field === 'grossWeight' || field === 'stoneWeight') {
+        updated.netWeight = calculateNetWeight(updated.grossWeight, updated.stoneWeight);
       }
-
-      if (discountAmount < 0) {
-        newErrors.discountAmount = 'Discount cannot be negative';
-      } else if (discountAmount > sellingPrice) {
-        newErrors.discountAmount = 'Discount cannot be greater than selling price';
-      } else {
-        delete newErrors.discountAmount;
-      }
-      setErrors(newErrors);
-    }
+      
+      return updated;
+    });
     
     if (errors[field]) {
       setErrors(prev => ({
@@ -317,58 +315,31 @@ const CreateInvoicePage = () => {
   };
 
   const handleCommonDataChange = (field, value) => {
-    const updatedCommonData = {
-      ...commonData,
-      [field]: value
-    };
-    setCommonData(updatedCommonData);
-
-    // Recalculate all product final amounts when GST changes
-    if (field === 'isGstApplied' || field === 'gstPercentage') {
-      setSelectedProducts(prev => prev.map(p => {
-        const sellingPrice = parseFloat(p.sellingPrice) || 0;
-        const discountAmount = parseFloat(p.discountAmount) || 0;
-        const amountAfterDiscount = sellingPrice - discountAmount;
-        const isGstApplied = field === 'isGstApplied' ? value : updatedCommonData.isGstApplied;
-        const gstPercentage = field === 'gstPercentage' ? parseFloat(value) : parseFloat(updatedCommonData.gstPercentage);
-        const gstAmount = isGstApplied ? (amountAfterDiscount * gstPercentage) / 100 : 0;
-        return {
-          ...p,
-          finalAmount: Math.round((amountAfterDiscount + gstAmount) * 100) / 100
-        };
-      }));
-    }
-  };
-
-  const calculateAmounts = () => {
-    const sellingPrice = parseFloat(formData.sellingPrice) || 0;
-    const discountAmount = parseFloat(formData.discountAmount) || 0;
-    const gstPercentage = formData.isGstApplied ? parseFloat(formData.gstPercentage) : 0;
-    
-    const amountAfterDiscount = sellingPrice - discountAmount;
-    const gstAmount = (amountAfterDiscount * gstPercentage) / 100;
-    const finalAmount = amountAfterDiscount + gstAmount;
-    
-    setFormData(prev => ({
+    setCommonData(prev => ({
       ...prev,
-      finalAmount: Math.round(finalAmount * 100) / 100
+      [field]: value
     }));
   };
-
-  useEffect(() => {
-    if (!isMultipleMode) {
-      calculateAmounts();
-    }
-  }, [formData.sellingPrice, formData.discountAmount, formData.isGstApplied, formData.gstPercentage, isMultipleMode]);
 
   // Calculate totals for multiple products
   const calculateTotals = () => {
     const totals = selectedProducts.reduce((acc, p) => {
-      acc.sellingPrice += parseFloat(p.sellingPrice) || 0;
-      acc.discountAmount += parseFloat(p.discountAmount) || 0;
-      acc.finalAmount += parseFloat(p.finalAmount) || 0;
+      const calc = calculateProductTotal(p);
+      acc.goldAmount += calc.goldAmount;
+      acc.makingCharges += calc.makingCharges;
+      acc.stoneAmount += (parseFloat(p.stoneAmount) || 0) * (parseInt(p.quantity) || 1);
+      acc.subtotal += calc.subtotal;
+      acc.gstAmount += calc.gstAmount;
+      acc.total += calc.total;
       return acc;
-    }, { sellingPrice: 0, discountAmount: 0, finalAmount: 0 });
+    }, { goldAmount: 0, makingCharges: 0, stoneAmount: 0, subtotal: 0, gstAmount: 0, total: 0 });
+    
+    // Add old metal amount if applicable
+    if (commonData.oldMetalAmount) {
+      totals.subtotal += parseFloat(commonData.oldMetalAmount);
+      totals.total += parseFloat(commonData.oldMetalAmount);
+    }
+    
     return totals;
   };
 
@@ -379,43 +350,31 @@ const CreateInvoicePage = () => {
       if (selectedProducts.length === 0) {
         newErrors.products = 'Please add at least one product';
       }
-      if (!commonData.customerName.trim()) {
-        newErrors.customerName = 'Customer name is required';
-      }
-      if (!commonData.customerPhone.trim()) {
-        newErrors.customerPhone = 'Customer phone is required';
-      }
-      if (commonData.customerPhone.trim() && !/^[\d\s\-\+\(\)]+$/.test(commonData.customerPhone.trim())) {
-        newErrors.customerPhone = 'Please enter a valid phone number';
+      if (!commonData.customerId) {
+        newErrors.customerId = 'Customer ID is required';
       }
       
-      // Validate all products
-      selectedProducts.forEach((p, index) => {
-        const sellingPrice = parseFloat(p.sellingPrice) || 0;
-        const discountAmount = parseFloat(p.discountAmount) || 0;
-        
-        if (sellingPrice <= 0) {
-          newErrors[`product_${p.id}_price`] = 'Selling price must be greater than 0';
+      selectedProducts.forEach((p) => {
+        if (parseFloat(p.grossWeight) <= 0) {
+          newErrors[`product_${p.id}_grossWeight`] = 'Gross weight must be greater than 0';
         }
-        if (discountAmount < 0) {
-          newErrors[`product_${p.id}_discount`] = 'Discount cannot be negative';
+        if (parseFloat(p.netWeight) < 0) {
+          newErrors[`product_${p.id}_netWeight`] = 'Net weight cannot be negative';
         }
-        if (discountAmount > sellingPrice) {
-          newErrors[`product_${p.id}_discount`] = 'Discount cannot be greater than selling price';
+        if (parseFloat(p.goldRate) <= 0) {
+          newErrors[`product_${p.id}_goldRate`] = 'Gold rate must be greater than 0';
+        }
+        if (parseInt(p.quantity) <= 0) {
+          newErrors[`product_${p.id}_quantity`] = 'Quantity must be greater than 0';
         }
       });
     } else {
       if (!formData.productId) newErrors.productId = 'Please search and select a product';
-      if (!formData.customerName.trim()) newErrors.customerName = 'Customer name is required';
-      if (!formData.customerPhone.trim()) newErrors.customerPhone = 'Customer phone is required';
-      if (formData.customerPhone.trim() && !/^[\d\s\-\+\(\)]+$/.test(formData.customerPhone.trim())) {
-        newErrors.customerPhone = 'Please enter a valid phone number';
-      }
-      if (formData.sellingPrice <= 0) newErrors.sellingPrice = 'Selling price must be greater than 0';
-      if (formData.sellingPrice < 0) newErrors.sellingPrice = 'Selling price cannot be negative';
-      if (formData.discountAmount < 0) newErrors.discountAmount = 'Discount amount cannot be negative';
-      if (formData.discountAmount > formData.sellingPrice) newErrors.discountAmount = 'Discount cannot be greater than selling price';
-      if (formData.isGstApplied && formData.gstPercentage < 0) newErrors.gstPercentage = 'GST percentage cannot be negative';
+      if (!formData.customerId) newErrors.customerId = 'Customer ID is required';
+      if (parseFloat(formData.grossWeight) <= 0) newErrors.grossWeight = 'Gross weight must be greater than 0';
+      if (parseFloat(formData.netWeight) < 0) newErrors.netWeight = 'Net weight cannot be negative';
+      if (parseFloat(formData.goldRate) <= 0) newErrors.goldRate = 'Gold rate must be greater than 0';
+      if (parseInt(formData.quantity) <= 0) newErrors.quantity = 'Quantity must be greater than 0';
     }
     
     setErrors(newErrors);
@@ -427,7 +386,6 @@ const CreateInvoicePage = () => {
     
     if (!validateForm()) {
       error('Please fix the errors before submitting');
-      // Scroll to first error
       const firstError = document.querySelector('[data-error="true"]');
       if (firstError) {
         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -439,51 +397,81 @@ const CreateInvoicePage = () => {
     setLoading(true);
     try {
       if (isMultipleMode) {
-        // Create bulk invoices
-        const invoices = selectedProducts.map(p => ({
+        // Create quotation with multiple items
+        const items = selectedProducts.map(p => ({
           productId: parseInt(p.productId),
+          itemCode: p.itemCode,
           rfidCode: p.rfidCode,
-          customerName: commonData.customerName,
-          customerPhone: commonData.customerPhone,
-          sellingPrice: parseFloat(p.sellingPrice),
-          discountAmount: parseFloat(p.discountAmount),
-          finalAmount: parseFloat(p.finalAmount),
-          invoiceType: commonData.invoiceType,
-          paymentMethod: commonData.paymentMethod,
-          soldOn: new Date(commonData.soldOn).toISOString(),
-          isGstApplied: commonData.isGstApplied,
-          gstPercentage: parseFloat(commonData.gstPercentage),
-          remarks: p.remarks || commonData.remarks
+          grossWeight: parseFloat(p.grossWeight),
+          stoneWeight: parseFloat(p.stoneWeight) || 0,
+          netWeight: parseFloat(p.netWeight),
+          goldRate: parseFloat(p.goldRate),
+          making: parseFloat(p.making) || 0,
+          makingType: p.makingType || 'Fixed',
+          stoneAmount: parseFloat(p.stoneAmount) || 0,
+          quantity: parseInt(p.quantity) || 1,
+          remarks: p.remarks || ''
         }));
 
-        const response = await invoiceService.createBulkInvoices({ invoices });
-        
-        if (response) {
-          success(`Successfully created ${invoices.length} invoice(s)`);
-          navigate('/invoices/list');
-        }
-      } else {
-        // Create single invoice
-        const invoiceData = {
-          ...formData,
-          productId: parseInt(formData.productId),
-          sellingPrice: parseFloat(formData.sellingPrice),
-          discountAmount: parseFloat(formData.discountAmount),
-          finalAmount: parseFloat(formData.finalAmount),
-          gstPercentage: parseFloat(formData.gstPercentage),
-          soldOn: new Date(formData.soldOn).toISOString()
+        const quotationData = {
+          items,
+          customerId: parseInt(commonData.customerId),
+          oldMetalWeight: commonData.oldMetalWeight ? parseFloat(commonData.oldMetalWeight) : null,
+          oldMetalRate: commonData.oldMetalRate ? parseFloat(commonData.oldMetalRate) : null,
+          oldMetalAmount: commonData.oldMetalAmount ? parseFloat(commonData.oldMetalAmount) : null,
+          paymentMode: commonData.paymentMode,
+          isGstApplied: commonData.isGstApplied,
+          gstPercentage: parseFloat(commonData.gstPercentage),
+          validUntil: new Date(commonData.validUntil).toISOString(),
+          remarks: commonData.remarks,
+          sendEmail: commonData.sendEmail
         };
 
-        const response = await invoiceService.createInvoice(invoiceData);
+        const response = await quotationService.createQuotation(quotationData);
         
         if (response) {
-          success('Invoice created successfully');
-          navigate('/invoices/list');
+          success(`Successfully created quotation with ${items.length} item(s)`);
+          navigate('/quotation/list');
+        }
+      } else {
+        // Create single item quotation
+        const quotationData = {
+          items: [{
+            productId: parseInt(formData.productId),
+            itemCode: formData.itemCode,
+            rfidCode: formData.rfidCode,
+            grossWeight: parseFloat(formData.grossWeight),
+            stoneWeight: parseFloat(formData.stoneWeight) || 0,
+            netWeight: parseFloat(formData.netWeight),
+            goldRate: parseFloat(formData.goldRate),
+            making: parseFloat(formData.making) || 0,
+            makingType: formData.makingType,
+            stoneAmount: parseFloat(formData.stoneAmount) || 0,
+            quantity: parseInt(formData.quantity) || 1,
+            remarks: formData.remarks || ''
+          }],
+          customerId: parseInt(formData.customerId),
+          oldMetalWeight: formData.oldMetalWeight ? parseFloat(formData.oldMetalWeight) : null,
+          oldMetalRate: formData.oldMetalRate ? parseFloat(formData.oldMetalRate) : null,
+          oldMetalAmount: formData.oldMetalAmount ? parseFloat(formData.oldMetalAmount) : null,
+          paymentMode: formData.paymentMode,
+          isGstApplied: formData.isGstApplied,
+          gstPercentage: parseFloat(formData.gstPercentage),
+          validUntil: new Date(formData.validUntil).toISOString(),
+          remarks: formData.remarks,
+          sendEmail: formData.sendEmail
+        };
+
+        const response = await quotationService.createQuotation(quotationData);
+        
+        if (response) {
+          success('Quotation created successfully');
+          navigate('/quotation/list');
         }
       }
     } catch (err) {
-      console.error('Error creating invoice:', err);
-      error(err.response?.data?.message || 'Failed to create invoice');
+      console.error('Error creating quotation:', err);
+      error(err.response?.data?.message || 'Failed to create quotation');
     } finally {
       setLoading(false);
     }
@@ -497,28 +485,38 @@ const CreateInvoicePage = () => {
     setProductErrors({});
     setFormData({
       productId: '',
+      itemCode: '',
       rfidCode: '',
-      customerName: '',
-      customerPhone: '',
-      sellingPrice: 0,
-      discountAmount: 0,
-      finalAmount: 0,
+      grossWeight: 0,
+      stoneWeight: 0,
+      netWeight: 0,
+      goldRate: 0,
+      making: 0,
+      makingType: 'Fixed',
+      stoneAmount: 0,
+      quantity: 1,
+      remarks: '',
+      customerId: '',
+      paymentMode: 'Cash',
       isGstApplied: false,
       gstPercentage: 3.00,
-      invoiceType: 'Sale',
-      paymentMethod: 'Cash',
-      soldOn: new Date().toISOString().slice(0, 16),
-      remarks: ''
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      sendEmail: false,
+      oldMetalWeight: null,
+      oldMetalRate: null,
+      oldMetalAmount: null
     });
     setCommonData({
-      customerName: '',
-      customerPhone: '',
-      invoiceType: 'Sale',
-      paymentMethod: 'Cash',
-      soldOn: new Date().toISOString().slice(0, 16),
+      customerId: '',
+      paymentMode: 'Cash',
       isGstApplied: false,
       gstPercentage: 3.00,
-      remarks: ''
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      remarks: '',
+      sendEmail: false,
+      oldMetalWeight: null,
+      oldMetalRate: null,
+      oldMetalAmount: null
     });
     setErrors({});
   };
@@ -530,20 +528,21 @@ const CreateInvoicePage = () => {
 
   const formatWeight = (value) => {
     if (!value && value !== 0) return '-';
-    return `${parseFloat(value).toFixed(2)}g`;
+    return `${parseFloat(value).toFixed(3)}g`;
   };
 
   const totals = isMultipleMode ? calculateTotals() : null;
+  const singleProductTotal = !isMultipleMode && searchedProduct ? calculateProductTotal(formData) : null;
 
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 w-full">
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          Create New Invoice
+          Create New Quotation
         </h1>
         <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1">
-          Search product by RFID number or Item Code to create invoice
+          Search product by RFID number or Item Code to create quotation
         </p>
       </div>
 
@@ -598,10 +597,9 @@ const CreateInvoicePage = () => {
           <div className="lg:w-56 xl:w-64 flex-shrink-0">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3 flex items-center">
               <Layers className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
-              Invoice Mode
+              Quotation Mode
             </h3>
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 sm:p-4">
-              {/* Current Mode Text */}
               <div className="text-center mb-3">
                 <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-0.5">
                   {isMultipleMode ? (
@@ -618,7 +616,6 @@ const CreateInvoicePage = () => {
                 </p>
               </div>
               
-              {/* Toggle Switch */}
               <div className="flex items-center justify-center mb-2">
                 <button
                   type="button"
@@ -641,9 +638,8 @@ const CreateInvoicePage = () => {
                       ? 'bg-primary-600'
                       : 'bg-gray-300 dark:bg-gray-600'
                   }`}
-                  aria-label="Toggle invoice mode"
+                  aria-label="Toggle quotation mode"
                 >
-                  {/* Toggle Slider */}
                   <span
                     className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out ${
                       isMultipleMode ? 'translate-x-8' : 'translate-x-1'
@@ -652,16 +648,15 @@ const CreateInvoicePage = () => {
                 </button>
               </div>
               
-              {/* Description */}
               <p className="text-center text-xs text-gray-600 dark:text-gray-400 leading-tight">
-                {isMultipleMode ? 'Create invoices for multiple products' : 'Create invoice for a single product'}
+                {isMultipleMode ? 'Create quotation for multiple products' : 'Create quotation for a single product'}
               </p>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Multiple Products List - Compact and Scrollable */}
+      {/* Multiple Products List */}
       {isMultipleMode && selectedProducts.length > 0 && (
         <Card className="p-3 sm:p-4 md:p-6" ref={productsListRef}>
           <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -670,17 +665,17 @@ const CreateInvoicePage = () => {
               Selected Products ({selectedProducts.length})
             </h3>
           </div>
-          <div className="space-y-2 sm:space-y-3 max-h-[600px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+          <div className="space-y-2 sm:space-y-3 max-h-[600px] overflow-y-auto pr-2">
             {selectedProducts.map((productItem, index) => {
               const isExpanded = expandedProducts.has(productItem.id);
-              const hasErrors = productErrors[`${productItem.id}_price`] || productErrors[`${productItem.id}_discount`];
+              const calc = calculateProductTotal(productItem);
+              const hasErrors = Object.keys(productErrors).some(key => key.startsWith(`${productItem.id}_`));
               
               return (
                 <Card 
                   key={productItem.id} 
                   className={`bg-gray-50 dark:bg-gray-900/50 border-2 ${hasErrors ? 'border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-gray-700'}`}
                 >
-                  {/* Compact Header - Always Visible */}
                   <div className="flex items-center justify-between p-2 sm:p-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -699,10 +694,12 @@ const CreateInvoicePage = () => {
                         </div>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-500 dark:text-gray-400">
-                        <span>{productItem.product.categoryName || '-'}</span>
+                        <span>Net: {formatWeight(productItem.netWeight)}</span>
+                        <span className="text-gray-400">•</span>
+                        <span>Rate: {formatCurrency(productItem.goldRate)}</span>
                         <span className="text-gray-400">•</span>
                         <span className="font-semibold text-primary-600">
-                          Final: {formatCurrency(productItem.finalAmount)}
+                          Total: {formatCurrency(calc.total)}
                         </span>
                       </div>
                     </div>
@@ -732,7 +729,6 @@ const CreateInvoicePage = () => {
                     </div>
                   </div>
 
-                  {/* Expanded Content - Collapsible */}
                   {isExpanded && (
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 sm:pt-4 mt-2 sm:mt-3">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -760,58 +756,108 @@ const CreateInvoicePage = () => {
                                 {productItem.product.purityName || '-'}
                               </p>
                             </div>
-                            <div>
-                              <label className="block text-gray-500 dark:text-gray-400 mb-0.5">Weight</label>
-                              <p className="text-gray-900 dark:text-white">
-                                {formatWeight(productItem.product.weight)}
-                              </p>
-                            </div>
-                            <div>
-                              <label className="block text-gray-500 dark:text-gray-400 mb-0.5">Making Charges</label>
-                              <p className="text-gray-900 dark:text-white">
-                                {formatCurrency(productItem.product.makingCharges)}
-                              </p>
-                            </div>
-                            <div>
-                              <label className="block text-gray-500 dark:text-gray-400 mb-0.5">Current Price</label>
-                              <p className="text-gray-900 dark:text-white font-semibold text-primary-600">
-                                {formatCurrency(productItem.product.sellingPrice || productItem.product.price)}
-                              </p>
-                            </div>
                           </div>
                         </div>
 
-                        {/* Pricing Inputs */}
+                        {/* Product Details Inputs */}
                         <div className="space-y-3">
                           <h5 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Pricing Details
+                            Product Details
                           </h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-3">
                             <div>
                               <Input
-                                label="Selling Price *"
+                                label="Gross Weight (g) *"
                                 type="number"
-                                value={productItem.sellingPrice}
-                                onChange={(e) => updateProductInList(productItem.id, 'sellingPrice', e.target.value)}
-                                placeholder="0.00"
+                                value={productItem.grossWeight}
+                                onChange={(e) => updateProductInList(productItem.id, 'grossWeight', e.target.value)}
+                                placeholder="0.000"
                                 min="0"
-                                step="0.01"
-                                error={productErrors[`${productItem.id}_price`] || errors[`product_${productItem.id}_price`]}
-                                data-error={productErrors[`${productItem.id}_price`] || errors[`product_${productItem.id}_price`] ? 'true' : 'false'}
+                                step="0.001"
+                                error={productErrors[`${productItem.id}_grossWeight`] || errors[`product_${productItem.id}_grossWeight`]}
+                                data-error={productErrors[`${productItem.id}_grossWeight`] || errors[`product_${productItem.id}_grossWeight`] ? 'true' : 'false'}
                                 className="text-sm"
                               />
                             </div>
                             <div>
                               <Input
-                                label="Discount"
+                                label="Stone Weight (g)"
                                 type="number"
-                                value={productItem.discountAmount}
-                                onChange={(e) => updateProductInList(productItem.id, 'discountAmount', e.target.value)}
+                                value={productItem.stoneWeight}
+                                onChange={(e) => updateProductInList(productItem.id, 'stoneWeight', e.target.value)}
+                                placeholder="0.000"
+                                min="0"
+                                step="0.001"
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                label="Net Weight (g)"
+                                type="number"
+                                value={productItem.netWeight}
+                                readOnly
+                                className="text-sm bg-gray-50 dark:bg-gray-800"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                label="Gold Rate (₹/g) *"
+                                type="number"
+                                value={productItem.goldRate}
+                                onChange={(e) => updateProductInList(productItem.id, 'goldRate', e.target.value)}
                                 placeholder="0.00"
                                 min="0"
                                 step="0.01"
-                                error={productErrors[`${productItem.id}_discount`] || errors[`product_${productItem.id}_discount`]}
-                                data-error={productErrors[`${productItem.id}_discount`] || errors[`product_${productItem.id}_discount`] ? 'true' : 'false'}
+                                error={productErrors[`${productItem.id}_goldRate`] || errors[`product_${productItem.id}_goldRate`]}
+                                data-error={productErrors[`${productItem.id}_goldRate`] || errors[`product_${productItem.id}_goldRate`] ? 'true' : 'false'}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                label="Making Charges"
+                                type="number"
+                                value={productItem.making}
+                                onChange={(e) => updateProductInList(productItem.id, 'making', e.target.value)}
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01"
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Select
+                                label="Making Type"
+                                value={productItem.makingType}
+                                onChange={(value) => updateProductInList(productItem.id, 'makingType', value)}
+                                options={makingTypes}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                label="Stone Amount (₹)"
+                                type="number"
+                                value={productItem.stoneAmount}
+                                onChange={(e) => updateProductInList(productItem.id, 'stoneAmount', e.target.value)}
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01"
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                label="Quantity *"
+                                type="number"
+                                value={productItem.quantity}
+                                onChange={(e) => updateProductInList(productItem.id, 'quantity', e.target.value)}
+                                placeholder="1"
+                                min="1"
+                                step="1"
+                                error={productErrors[`${productItem.id}_quantity`] || errors[`product_${productItem.id}_quantity`]}
+                                data-error={productErrors[`${productItem.id}_quantity`] || errors[`product_${productItem.id}_quantity`] ? 'true' : 'false'}
                                 className="text-sm"
                               />
                             </div>
@@ -826,9 +872,9 @@ const CreateInvoicePage = () => {
                             />
                           </div>
                           <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Final Amount:</span>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Item Total:</span>
                             <span className="text-base sm:text-lg font-bold text-primary-600">
-                              {formatCurrency(productItem.finalAmount)}
+                              {formatCurrency(calc.total)}
                             </span>
                           </div>
                         </div>
@@ -898,41 +944,17 @@ const CreateInvoicePage = () => {
                 {searchedProduct.purityName || '-'}
               </p>
             </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Weight
-              </label>
-              <p className="text-sm sm:text-base text-gray-900 dark:text-white">
-                {formatWeight(searchedProduct.weight)}
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Making Charges
-              </label>
-              <p className="text-sm sm:text-base text-gray-900 dark:text-white">
-                {formatCurrency(searchedProduct.makingCharges)}
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                Current Price
-              </label>
-              <p className="text-sm sm:text-base text-gray-900 dark:text-white font-semibold text-primary-600">
-                {formatCurrency(searchedProduct.sellingPrice || searchedProduct.price)}
-              </p>
-            </div>
           </div>
           <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
               <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-sm sm:text-base font-medium">Product found and ready for invoice creation</span>
+              <span className="text-sm sm:text-base font-medium">Product found and ready for quotation creation</span>
             </div>
           </div>
         </Card>
       )}
 
-      {/* Invoice Form */}
+      {/* Quotation Form */}
       {((!isMultipleMode && searchedProduct) || (isMultipleMode && selectedProducts.length > 0)) && (
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -947,80 +969,187 @@ const CreateInvoicePage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Input
-                      label="Customer Name *"
-                      value={isMultipleMode ? commonData.customerName : formData.customerName}
+                      label="Customer ID *"
+                      value={isMultipleMode ? commonData.customerId : formData.customerId}
                       onChange={(e) => isMultipleMode 
-                        ? handleCommonDataChange('customerName', e.target.value)
-                        : handleInputChange('customerName', e.target.value)
+                        ? handleCommonDataChange('customerId', e.target.value)
+                        : handleInputChange('customerId', e.target.value)
                       }
-                      placeholder="Enter customer name"
-                      error={errors.customerName}
+                      placeholder="Enter customer ID"
+                      error={errors.customerId}
                       required
-                      data-error={errors.customerName ? 'true' : 'false'}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Input
-                      label="Customer Phone *"
-                      value={isMultipleMode ? commonData.customerPhone : formData.customerPhone}
-                      onChange={(e) => isMultipleMode
-                        ? handleCommonDataChange('customerPhone', e.target.value)
-                        : handleInputChange('customerPhone', e.target.value)
-                      }
-                      placeholder="Enter phone number"
-                      error={errors.customerPhone}
-                      required
-                      data-error={errors.customerPhone ? 'true' : 'false'}
+                      data-error={errors.customerId ? 'true' : 'false'}
                     />
                   </div>
                 </div>
               </Card>
 
-              {/* Pricing Details - Only for single mode */}
+              {/* Product Details - Single Mode Only */}
               {!isMultipleMode && (
                 <Card className="p-3 sm:p-4 md:p-6">
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-                    <Calculator className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
-                    Pricing Details
+                    <Scale className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
+                    Weight & Pricing Details
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                       <Input
-                        label="Selling Price *"
+                        label="Gross Weight (g) *"
                         type="number"
-                        value={formData.sellingPrice}
-                        onChange={(e) => handleInputChange('sellingPrice', e.target.value)}
-                        placeholder="0.00"
-                        error={errors.sellingPrice}
+                        value={formData.grossWeight}
+                        onChange={(e) => handleInputChange('grossWeight', e.target.value)}
+                        placeholder="0.000"
                         min="0"
-                        step="0.01"
+                        step="0.001"
+                        error={errors.grossWeight}
                         required
-                        data-error={errors.sellingPrice ? 'true' : 'false'}
+                        data-error={errors.grossWeight ? 'true' : 'false'}
                       />
                     </div>
-                    
                     <div>
                       <Input
-                        label="Discount Amount"
+                        label="Stone Weight (g)"
                         type="number"
-                        value={formData.discountAmount}
-                        onChange={(e) => handleInputChange('discountAmount', e.target.value)}
+                        value={formData.stoneWeight}
+                        onChange={(e) => handleInputChange('stoneWeight', e.target.value)}
+                        placeholder="0.000"
+                        min="0"
+                        step="0.001"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Net Weight (g)"
+                        type="number"
+                        value={formData.netWeight}
+                        readOnly
+                        className="bg-gray-50 dark:bg-gray-800"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Gold Rate (₹/g) *"
+                        type="number"
+                        value={formData.goldRate}
+                        onChange={(e) => handleInputChange('goldRate', e.target.value)}
                         placeholder="0.00"
-                        error={errors.discountAmount}
                         min="0"
                         step="0.01"
-                        data-error={errors.discountAmount ? 'true' : 'false'}
+                        error={errors.goldRate}
+                        required
+                        data-error={errors.goldRate ? 'true' : 'false'}
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Making Charges"
+                        type="number"
+                        value={formData.making}
+                        onChange={(e) => handleInputChange('making', e.target.value)}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <Select
+                        label="Making Type"
+                        value={formData.makingType}
+                        onChange={(value) => handleInputChange('makingType', value)}
+                        options={makingTypes}
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Stone Amount (₹)"
+                        type="number"
+                        value={formData.stoneAmount}
+                        onChange={(e) => handleInputChange('stoneAmount', e.target.value)}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Quantity *"
+                        type="number"
+                        value={formData.quantity}
+                        onChange={(e) => handleInputChange('quantity', e.target.value)}
+                        placeholder="1"
+                        min="1"
+                        step="1"
+                        error={errors.quantity}
+                        required
+                        data-error={errors.quantity ? 'true' : 'false'}
                       />
                     </div>
                   </div>
                 </Card>
               )}
 
+              {/* Old Metal Details */}
+              <Card className="p-3 sm:p-4 md:p-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
+                  <Gem className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
+                  Old Metal Details (Optional)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div>
+                    <Input
+                      label="Old Metal Weight (g)"
+                      type="number"
+                      value={isMultipleMode ? (commonData.oldMetalWeight || '') : (formData.oldMetalWeight || '')}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? null : e.target.value;
+                        isMultipleMode
+                          ? handleCommonDataChange('oldMetalWeight', value)
+                          : handleInputChange('oldMetalWeight', value);
+                      }}
+                      placeholder="0.000"
+                      min="0"
+                      step="0.001"
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      label="Old Metal Rate (₹/g)"
+                      type="number"
+                      value={isMultipleMode ? (commonData.oldMetalRate || '') : (formData.oldMetalRate || '')}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? null : e.target.value;
+                        isMultipleMode
+                          ? handleCommonDataChange('oldMetalRate', value)
+                          : handleInputChange('oldMetalRate', value);
+                      }}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      label="Old Metal Amount (₹)"
+                      type="number"
+                      value={isMultipleMode ? (commonData.oldMetalAmount || '') : (formData.oldMetalAmount || '')}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? null : e.target.value;
+                        isMultipleMode
+                          ? handleCommonDataChange('oldMetalAmount', value)
+                          : handleInputChange('oldMetalAmount', value);
+                      }}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </Card>
+
               {/* GST Details */}
               <Card className="p-3 sm:p-4 md:p-6">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-                  <Receipt className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
+                  <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
                   GST Details
                 </h3>
                 <div className="space-y-3 sm:space-y-4">
@@ -1036,7 +1165,7 @@ const CreateInvoicePage = () => {
                       className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
                     />
                     <label htmlFor="isGstApplied" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
-                      Apply GST (Pakka Bill)
+                      Apply GST
                     </label>
                   </div>
                   
@@ -1057,45 +1186,33 @@ const CreateInvoicePage = () => {
                 </div>
               </Card>
 
-              {/* Transaction Details */}
+              {/* Quotation Details */}
               <Card className="p-3 sm:p-4 md:p-6">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
-                  Transaction Details
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary-500" />
+                  Quotation Details
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Select
-                      label="Invoice Type"
-                      value={isMultipleMode ? commonData.invoiceType : formData.invoiceType}
+                      label="Payment Mode"
+                      value={isMultipleMode ? commonData.paymentMode : formData.paymentMode}
                       onChange={(value) => isMultipleMode
-                        ? handleCommonDataChange('invoiceType', value)
-                        : handleInputChange('invoiceType', value)
+                        ? handleCommonDataChange('paymentMode', value)
+                        : handleInputChange('paymentMode', value)
                       }
-                      options={invoiceTypes}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Select
-                      label="Payment Method"
-                      value={isMultipleMode ? commonData.paymentMethod : formData.paymentMethod}
-                      onChange={(value) => isMultipleMode
-                        ? handleCommonDataChange('paymentMethod', value)
-                        : handleInputChange('paymentMethod', value)
-                      }
-                      options={paymentMethods}
+                      options={paymentModes}
                     />
                   </div>
                   
                   <div>
                     <Input
-                      label="Sale Date"
+                      label="Valid Until"
                       type="datetime-local"
-                      value={isMultipleMode ? commonData.soldOn : formData.soldOn}
+                      value={isMultipleMode ? commonData.validUntil : formData.validUntil}
                       onChange={(e) => isMultipleMode
-                        ? handleCommonDataChange('soldOn', e.target.value)
-                        : handleInputChange('soldOn', e.target.value)
+                        ? handleCommonDataChange('validUntil', e.target.value)
+                        : handleInputChange('validUntil', e.target.value)
                       }
                     />
                   </div>
@@ -1116,6 +1233,23 @@ const CreateInvoicePage = () => {
                     rows="3"
                   />
                 </div>
+
+                <div className="mt-3 sm:mt-4 flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="sendEmail"
+                    checked={isMultipleMode ? commonData.sendEmail : formData.sendEmail}
+                    onChange={(e) => isMultipleMode
+                      ? handleCommonDataChange('sendEmail', e.target.checked)
+                      : handleInputChange('sendEmail', e.target.checked)
+                    }
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <label htmlFor="sendEmail" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 flex items-center space-x-2">
+                    <Mail className="w-4 h-4" />
+                    <span>Send quotation via email</span>
+                  </label>
+                </div>
               </Card>
             </div>
 
@@ -1130,92 +1264,70 @@ const CreateInvoicePage = () => {
                   {isMultipleMode && totals ? (
                     <>
                       <div className="flex justify-between text-sm sm:text-base">
-                        <span className="text-gray-600 dark:text-gray-400">Total Selling Price:</span>
-                        <span className="font-medium">{formatCurrency(totals.sellingPrice)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Gold Amount:</span>
+                        <span className="font-medium">{formatCurrency(totals.goldAmount)}</span>
                       </div>
-                      
                       <div className="flex justify-between text-sm sm:text-base">
-                        <span className="text-gray-600 dark:text-gray-400">Total Discount:</span>
-                        <span className="font-medium text-green-600">-{formatCurrency(totals.discountAmount)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Making Charges:</span>
+                        <span className="font-medium">{formatCurrency(totals.makingCharges)}</span>
                       </div>
-                      
-                      {commonData.isGstApplied && (
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600 dark:text-gray-400">Stone Amount:</span>
+                        <span className="font-medium">{formatCurrency(totals.stoneAmount)}</span>
+                      </div>
+                      {commonData.oldMetalAmount && (
                         <div className="flex justify-between text-sm sm:text-base">
-                          <span className="text-gray-600 dark:text-gray-400">Total GST ({commonData.gstPercentage}%):</span>
-                          <span className="font-medium">{formatCurrency(totals.finalAmount - (totals.sellingPrice - totals.discountAmount))}</span>
+                          <span className="text-gray-600 dark:text-gray-400">Old Metal:</span>
+                          <span className="font-medium text-green-600">-{formatCurrency(commonData.oldMetalAmount)}</span>
                         </div>
                       )}
-                      
+                      {commonData.isGstApplied && (
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-gray-600 dark:text-gray-400">GST ({commonData.gstPercentage}%):</span>
+                          <span className="font-medium">{formatCurrency(totals.gstAmount)}</span>
+                        </div>
+                      )}
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-2 sm:pt-3">
                         <div className="flex justify-between">
                           <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Grand Total:</span>
-                          <span className="text-base sm:text-lg font-bold text-primary-600">{formatCurrency(totals.finalAmount)}</span>
+                          <span className="text-base sm:text-lg font-bold text-primary-600">{formatCurrency(totals.total)}</span>
                         </div>
                       </div>
                     </>
-                  ) : (
+                  ) : singleProductTotal ? (
                     <>
                       <div className="flex justify-between text-sm sm:text-base">
-                        <span className="text-gray-600 dark:text-gray-400">Selling Price:</span>
-                        <span className="font-medium">{formatCurrency(formData.sellingPrice || 0)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Gold Amount:</span>
+                        <span className="font-medium">{formatCurrency(singleProductTotal.goldAmount)}</span>
                       </div>
-                      
                       <div className="flex justify-between text-sm sm:text-base">
-                        <span className="text-gray-600 dark:text-gray-400">Discount:</span>
-                        <span className="font-medium text-green-600">-{formatCurrency(formData.discountAmount || 0)}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Making Charges:</span>
+                        <span className="font-medium">{formatCurrency(singleProductTotal.makingCharges)}</span>
                       </div>
-                      
                       <div className="flex justify-between text-sm sm:text-base">
-                        <span className="text-gray-600 dark:text-gray-400">Amount after discount:</span>
-                        <span className="font-medium">{formatCurrency((parseFloat(formData.sellingPrice || 0) - parseFloat(formData.discountAmount || 0)))}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Stone Amount:</span>
+                        <span className="font-medium">{formatCurrency((parseFloat(formData.stoneAmount) || 0) * (parseInt(formData.quantity) || 1))}</span>
                       </div>
-                      
+                      {formData.oldMetalAmount && (
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-gray-600 dark:text-gray-400">Old Metal:</span>
+                          <span className="font-medium text-green-600">-{formatCurrency(formData.oldMetalAmount)}</span>
+                        </div>
+                      )}
                       {formData.isGstApplied && (
                         <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-gray-600 dark:text-gray-400">GST ({formData.gstPercentage}%):</span>
-                          <span className="font-medium">{formatCurrency(((parseFloat(formData.sellingPrice || 0) - parseFloat(formData.discountAmount || 0)) * formData.gstPercentage) / 100)}</span>
+                          <span className="font-medium">{formatCurrency(singleProductTotal.gstAmount)}</span>
                         </div>
                       )}
-                      
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-2 sm:pt-3">
                         <div className="flex justify-between">
-                          <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Final Amount:</span>
-                          <span className="text-base sm:text-lg font-bold text-primary-600">{formatCurrency(formData.finalAmount || 0)}</span>
+                          <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Final Total:</span>
+                          <span className="text-base sm:text-lg font-bold text-primary-600">{formatCurrency(singleProductTotal.total + (parseFloat(formData.oldMetalAmount) || 0))}</span>
                         </div>
                       </div>
                     </>
-                  )}
-                </div>
-              </Card>
-
-              {/* Bill Type Info */}
-              <Card className="p-3 sm:p-4 md:p-6">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
-                  Bill Type
-                </h3>
-                <div className={`p-3 sm:p-4 rounded-lg ${
-                  (isMultipleMode ? commonData.isGstApplied : formData.isGstApplied)
-                    ? 'bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
-                    : 'bg-orange-100 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
-                }`}>
-                  <div className="flex items-center space-x-2">
-                    <Receipt className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                      (isMultipleMode ? commonData.isGstApplied : formData.isGstApplied) ? 'text-green-600' : 'text-orange-600'
-                    }`} />
-                    <span className={`text-sm sm:text-base font-semibold ${
-                      (isMultipleMode ? commonData.isGstApplied : formData.isGstApplied) ? 'text-green-800 dark:text-green-200' : 'text-orange-800 dark:text-orange-200'
-                    }`}>
-                      {(isMultipleMode ? commonData.isGstApplied : formData.isGstApplied) ? 'Pakka Bill' : 'Kaccha Bill'}
-                    </span>
-                  </div>
-                  <p className={`text-xs sm:text-sm mt-2 ${
-                    (isMultipleMode ? commonData.isGstApplied : formData.isGstApplied) ? 'text-green-700 dark:text-green-300' : 'text-orange-700 dark:text-orange-300'
-                  }`}>
-                    {(isMultipleMode ? commonData.isGstApplied : formData.isGstApplied)
-                      ? 'GST applied - Official invoice' 
-                      : 'No GST - Informal bill'
-                    }
-                  </p>
+                  ) : null}
                 </div>
               </Card>
 
@@ -1228,7 +1340,7 @@ const CreateInvoicePage = () => {
                     disabled={loading}
                   >
                     <Save className="w-4 h-4" />
-                    <span>{loading ? 'Creating...' : isMultipleMode ? `Create ${selectedProducts.length} Invoice(s)` : 'Create Invoice'}</span>
+                    <span>{loading ? 'Creating...' : isMultipleMode ? `Create Quotation (${selectedProducts.length} items)` : 'Create Quotation'}</span>
                   </Button>
                   
                   <Button
@@ -1256,7 +1368,7 @@ const CreateInvoicePage = () => {
               Search for a Product
             </h3>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Enter RFID number or Item Code above to search for a product and create an invoice
+              Enter RFID number or Item Code above to search for a product and create a quotation
             </p>
           </div>
         </Card>
@@ -1265,4 +1377,5 @@ const CreateInvoicePage = () => {
   );
 };
 
-export default CreateInvoicePage;
+export default CreateQuotationPage;
+

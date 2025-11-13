@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getApiConfig, getAuthToken, getBaseUrl as getConfigBaseUrl } from '../config/apiConfig';
 import { selectBaseUrl, selectApiConfig } from '../store/slices/apiSlice';
 import { selectToken } from '../store/slices/authSlice';
+import globalLoadingManager from '../utils/globalLoadingManager';
 
 // Lazy store import to avoid circular dependency
 let store = null;
@@ -36,9 +37,21 @@ const createAxiosInstance = () => {
     },
   });
 
-  // Request interceptor to add auth token
+  // Request interceptor to add auth token and show loading
   instance.interceptors.request.use(
     (config) => {
+      // Show global loading (skip for certain endpoints if needed)
+      const skipLoadingEndpoints = ['/api/Auth/refresh', '/api/Health'];
+      const shouldShowLoading = !skipLoadingEndpoints.some(endpoint => 
+        config.url?.includes(endpoint)
+      );
+      
+      if (shouldShowLoading) {
+        const method = config.method?.toUpperCase() || 'GET';
+        const endpoint = config.url?.split('/').pop() || 'data';
+        globalLoadingManager.show(`Loading ${endpoint}...`);
+      }
+
       // Try to get token from Redux store first, then localStorage as fallback
       const currentStore = getStore();
       const state = currentStore ? currentStore.getState() : null;
@@ -52,14 +65,23 @@ const createAxiosInstance = () => {
       return config;
     },
     (error) => {
+      // Hide loading on request error
+      globalLoadingManager.hide();
       return Promise.reject(error);
     }
   );
 
-  // Response interceptor for error handling
+  // Response interceptor for error handling and hide loading
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // Hide loading on successful response
+      globalLoadingManager.hide();
+      return response;
+    },
     (error) => {
+      // Hide loading on error
+      globalLoadingManager.hide();
+      
       if (error.response?.status === 401) {
         // Handle unauthorized access
         localStorage.removeItem('authToken');
@@ -566,6 +588,15 @@ class ApiService {
   // Get all products for inventory
   async getAllProducts(params = {}) {
     return this.get('/api/Product/all', params);
+  }
+
+  // Dashboard specific methods
+  async getDashboardSummary() {
+    return this.get('/api/Dashboard/summary');
+  }
+
+  async getWeightByCategory() {
+    return this.get('/api/Dashboard/weight-by-category');
   }
 }
 

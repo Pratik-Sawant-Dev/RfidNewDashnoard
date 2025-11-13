@@ -2,19 +2,26 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LoadingProvider } from './contexts/LoadingContext';
 import store from './store';
 import { initializeApp } from './utils/initializeApp';
 
-// Pages
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import OnboardingPage from './pages/OnboardingPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import AddStockPage from './pages/AddStockPage';
-import InventoryPage from './pages/InventoryPage';
-import ProductListPage from './pages/ProductListPage';
-import InvoicePage from './pages/InvoicePage';
+// Auth Pages
+import LandingPage from './pages/auth/LandingPage';
+import LoginPage from './pages/auth/LoginPage';
+import OnboardingPage from './pages/auth/OnboardingPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+
+// Dashboard Pages
+import DashboardPage from './pages/dashboard/DashboardPage';
+
+// Inventory Pages
+import InventoryPage from './pages/inventory/InventoryPage';
+import AddStockPage from './pages/inventory/AddStockPage';
+import ProductListPage from './pages/inventory/ProductListPage';
+import ProductViewPage from './pages/inventory/ProductViewPage';
+import ProductEditPage from './pages/inventory/ProductEditPage';
+import ProductCatalogPage from './pages/inventory/ProductCatalogPage';
 
 // Reports Pages - API Integrated
 import StockMovementReportsPage from './pages/reports/StockMovementReportsPage';
@@ -26,12 +33,16 @@ import StockSummaryReportsPage from './pages/reports/StockSummaryReportsPage';
 import StockTransferReportsPage from './pages/reports/StockTransferReportsPage';
 
 // Invoice Pages
+import InvoicePage from './pages/invoices/InvoicePage';
 import InvoiceManagementPage from './pages/invoices/InvoiceManagementPage';
 import InvoiceListPage from './pages/invoices/InvoiceListPage';
 import CreateInvoicePage from './pages/invoices/CreateInvoicePage';
 import InvoiceDetailsPage from './pages/invoices/InvoiceDetailsPage';
 import InvoiceAnalyticsPage from './pages/invoices/InvoiceAnalyticsPage';
 import InvoiceReportsPage from './pages/invoices/InvoiceReportsPage';
+
+// Quotation Pages
+import CreateQuotationPage from './pages/quotation/CreateQuotationPage';
 
 // Member Pages
 import AdminPage from './pages/member/AdminPage';
@@ -56,10 +67,6 @@ import AddRFIDPage from './pages/rfid-hub/AddRFIDPage';
 import AllRFIDTagsListPage from './pages/rfid-hub/AllRFIDTagsListPage';
 import UnusedRFIDTagsListPage from './pages/rfid-hub/UnusedRFIDTagsListPage';
 
-// Product Pages
-import ProductViewPage from './pages/ProductViewPage';
-import ProductEditPage from './pages/ProductEditPage';
-import ProductCatalogPage from './pages/ProductCatalogPage';
 
 // Layout Components
 import Sidebar from './components/layout/Sidebar';
@@ -116,6 +123,7 @@ function App() {
   return (
     <Provider store={store}>
       <ThemeProvider>
+        <LoadingProvider>
         <AuthInitializer />
         <SmartPermissionLoader />
         <Router>
@@ -209,6 +217,26 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <InvoiceReportsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            {/* Quotation Routes */}
+            <Route path="/quotation/create" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CreateQuotationPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/quotation/list" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold">Quotation List</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">Quotation list page coming soon...</p>
+                  </div>
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -474,6 +502,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+        </LoadingProvider>
     </ThemeProvider>
     </Provider>
   );
